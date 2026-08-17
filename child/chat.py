@@ -6,19 +6,23 @@ from pathlib import Path
 import torch
 
 from child.bytes_io import bytes_to_text, text_to_bytes
+from child.learn import run_night
 from child.lesson import DEFAULT_CHECKPOINT, load_child
 from child.model import Child
 from child.talk import NEWLINE, clean_reply, format_prompt
+from child.wish import is_learn_command, parse_wish
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Talk with the child. Short turns. He is small."
+        description="Talk with the child. Say «поучи python в интернете» to send him to study."
     )
     parser.add_argument("--checkpoint", default=str(DEFAULT_CHECKPOINT))
     parser.add_argument("--say", default=None, help="One line, then exit.")
     parser.add_argument("--temperature", type=float, default=0.35)
     parser.add_argument("--bytes", dest="n_bytes", type=int, default=80)
+    parser.add_argument("--learn-steps", type=int, default=800)
+    parser.add_argument("--no-learn", action="store_true")
     return parser.parse_args()
 
 
@@ -55,17 +59,45 @@ def answer(
     return text
 
 
+def study_if_asked(user: str, learn_steps: int, checkpoint: str) -> str | None:
+    if not is_learn_command(user):
+        return None
+    parsed = parse_wish(user)
+    print(f"Хорошо. Сам учусь: topic={parsed.topic} web={parsed.use_web}")
+    run_night(
+        wish=user,
+        sources=[],
+        urls=[],
+        use_web=parsed.use_web,
+        steps=learn_steps,
+        batch_size=32,
+        lr=8e-5,
+        seed=42,
+        resume=checkpoint,
+        out=checkpoint,
+        sample_every=0,
+        keep_inbox=True,
+        skip_exam=True,
+    )
+    return "Я поучился. Спроси меня."
+
+
 def main() -> None:
     args = parse_args()
     path = resolve_checkpoint(Path(args.checkpoint))
     device = torch.device("cpu")
+    if args.say is not None and not args.no_learn:
+        learned = study_if_asked(args.say, args.learn_steps, str(path))
+        if learned is not None:
+            print(learned)
+            return
     model, _payload, total_steps = load_child(path, device)
     model.eval()
     history: list[tuple[str, str]] = []
     if args.say is not None:
         print(answer(model, args.say, history, args.temperature, args.n_bytes))
         return
-    print(f"Ребёнок слушает (шагов {total_steps}). Пиши. Пустая строка — выход.")
+    print(f"Ребёнок слушает (шагов {total_steps}). Пиши. «поучи …» — сам учится. Пустая строка — выход.")
     while True:
         try:
             user = input("ты > ").strip()
@@ -74,6 +106,14 @@ def main() -> None:
             break
         if not user:
             break
+        if not args.no_learn:
+            learned = study_if_asked(user, args.learn_steps, str(path))
+            if learned is not None:
+                print(f"я  > {learned}")
+                model, _payload, total_steps = load_child(path, device)
+                model.eval()
+                history = []
+                continue
         child = answer(model, user, history, args.temperature, args.n_bytes)
         print(f"я  > {child}")
         history.append((user, child))

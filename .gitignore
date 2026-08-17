@@ -10,3 +10,5 @@ data/inbox/*
 !data/inbox/.gitkeep
 data/learned/*
 !data/learned/.gitkeep
+data/web/*
+!data/web/.gitkeep

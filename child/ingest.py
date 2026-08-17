@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 from typing import Sequence
 
-TEXT_SUFFIXES = {".txt", ".md"}
+TEXT_SUFFIXES = {".txt", ".md", ".py"}
 
 
 def iter_text_files(paths: Sequence[Path]) -> list[Path]:
@@ -36,7 +36,7 @@ def split_practice_lines(text: str) -> list[str]:
     seen: set[str] = set()
     for piece in pieces:
         line = " ".join(piece.split()).strip()
-        if len(line) < 4 or len(line) > 90:
+        if len(line) < 4 or len(line) > 120:
             continue
         if line.startswith("#"):
             continue

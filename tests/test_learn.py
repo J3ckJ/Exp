@@ -2,9 +2,10 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from child.gather import gather
+from child.gather import gather_all
 from child.ingest import iter_text_files, mix_study, split_practice_lines
 from child.learn import brain_sentences, load_brain
+from child.wish import parse_wish
 
 
 class SelfLearnTests(unittest.TestCase):
@@ -14,19 +15,19 @@ class SelfLearnTests(unittest.TestCase):
         self.assertIn("Я сам читаю.", lines)
         self.assertIn("Мама рядом.", lines)
         self.assertNotIn("# заголовок", lines)
-        self.assertTrue(all(len(line) <= 90 for line in lines))
+        self.assertTrue(all(len(line) <= 120 for line in lines))
 
     def test_mix_repeats_old_and_new(self) -> None:
         mixed = mix_study(("старое\n", 2), ("новое\n", 3))
         self.assertEqual(mixed.count("старое"), 2)
         self.assertEqual(mixed.count("новое"), 3)
 
-    def test_gather_sees_inbox_and_extra(self) -> None:
+    def test_gather_sees_extra_without_web(self) -> None:
         with TemporaryDirectory() as raw:
             root = Path(raw)
             book = root / "book.txt"
             book.write_text("Привет.\n", encoding="utf-8")
-            paths = gather("учиться", [book])
+            paths = gather_all(parse_wish("учиться"), [book], [], use_web=False)
             self.assertIn(book, paths)
             files = iter_text_files([book])
             self.assertEqual(files, [book])

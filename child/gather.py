@@ -3,21 +3,28 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Sequence
 
+from child.web import fetch_wish_texts
+from child.wish import Wish
+
 INBOX = Path("data/inbox")
 LEARNED = Path("data/learned")
 READERS = Path("data/readers")
+WEB_DIR = Path("data/web")
 
 
-def gather(wish: str, extra: Sequence[Path]) -> list[Path]:
-    """Find tonight's books.
-
-    Wish is remembered for later (GitHub, e-books). Tonight it only
-    labels the notebook. Sources are local files the child can reach.
-    """
-    del wish
+def gather_all(
+    parsed: Wish,
+    extra: Sequence[Path],
+    extra_urls: Sequence[str],
+    use_web: bool,
+) -> list[Path]:
     paths = [Path(item) for item in extra]
     if INBOX.exists():
         paths.append(INBOX)
+    if use_web or parsed.use_web:
+        fetch_wish_texts(parsed.topic, extra_urls)
+        if WEB_DIR.exists():
+            paths.append(WEB_DIR)
     return paths
 
 

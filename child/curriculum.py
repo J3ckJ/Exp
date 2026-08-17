@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Callable, Sequence
 
+from child.english import english_body
+from child.python_lang import python_body
 from child.talk import format_pair
 
 # First school: simple Russian a child can hear many times.
@@ -388,18 +390,21 @@ def build_russian_power() -> str:
 
 
 def build_english_placeholder() -> str:
-    return (
-        "Hello.\n"
-        "This stage is not taught yet.\n"
-        "The child must learn Russian first.\n"
-    )
+    return english_body()
+
+
+def build_english_school() -> str:
+    """English with a lot of Russian so the first language does not die."""
+    return english_body() + build_russian_power()
 
 
 def build_python_placeholder() -> str:
-    return (
-        "print('not yet')\n"
-        "# First speak. Then English. Then code.\n"
-    )
+    return python_body()
+
+
+def build_python_school() -> str:
+    """Code as bytes, plus English and Russian memory."""
+    return python_body() + english_body() + _join(list(_GOLD) + list(_STORIES), 4)
 
 
 CURRICULUM: dict[str, Callable[[], str]] = {
@@ -410,7 +415,9 @@ CURRICULUM: dict[str, Callable[[], str]] = {
     "russian_talk": build_russian_talk,
     "russian_power": build_russian_power,
     "english_placeholder": build_english_placeholder,
+    "english_school": build_english_school,
     "python_placeholder": build_python_placeholder,
+    "python_school": build_python_school,
 }
 
 

@@ -8,7 +8,7 @@
 
 Это крошечный трансформер. Он смотрит на **байты UTF-8**, поэтому с рождения видит и кириллицу, и латиницу, и знаки кода. Знаний в нём нет: ручки (веса) в начале случайные.
 
-Размер — около 840 тысяч параметров, несколько мегабайт, не терабайты.
+Размер сейчас — около **2.8 млн** параметров (возраст preschooler), несколько мегабайт, не терабайты.
 
 Тело и тетрадь разделены:
 
@@ -18,7 +18,7 @@
 
 Цель: чтобы он **сам** учился. Учитель не обязан всю жизнь писать сетки предложений. Ночью петля такая: желание → взять тексты → повторить старый мозг, чтобы не забыть → прочитать новое → дописать тетрадь.
 
-Пока тексты лежат рядом (`data/inbox`, `data/readers`). Потом то же самое, только в ящик сам принесёт GitHub и книги. 840 тысяч параметров не планируют «выучить Python за ночь». Планирует петля. Тело только жуёт байты.
+Пока тексты лежат рядом (`data/inbox`, `data/readers`) **или** он сам ходит в белый список интернета (Википедия, GitHub raw, docs.python.org). Скажи в чате: «поучи python в интернете».
 
 ## Возраст, не чудо
 
@@ -45,8 +45,8 @@
 2. `russian_core` / `russian_school` / `russian_recitation` — настоящий учебный день: только живые пары, диалоги, короткие истории, повтор золотых фраз.
 3. `russian_talk` — очередь говорить: «Ты: … / Я: …».
 4. `russian_power` — плотный день после скачка роста: перефразы, «я не знаю», старый мир.
-5. `english_placeholder` — английский, позже, не забывая русский.
-6. `python_placeholder` — код, ещё позже.
+5. `english_school` — английский, русский не выключая.
+6. `python_school` — крошечный Python как язык байтов, плюс память RU/EN.
 
 Учитель не рождает ребёнка заново. `python3 -m child.train` продолжает с чекпоинта.
 
@@ -60,8 +60,11 @@ python3 -m child.exam
 python3 -m child.learn --wish "читать самому" --from data/readers/sam_chitayu.txt
 python3 -m child.sample --prompt "Я "
 python3 -m child.train --age preschooler --stage russian_power --steps 3500 --lr 3e-4
-python3 -m child.chat --say "Привет"
-python3 -m child.chat
+python3 -m child.train --stage english_school --steps 2500 --lr 1.2e-4
+python3 -m child.train --stage python_school --steps 2500 --lr 1.0e-4
+python3 -m child.learn --wish "поучи python в интернете" --web --steps 1000
+python3 -m child.chat --say "поучи english"
+python3 -m child.chat --say "Hello"
 ```
 
 Один урок, если нужно: `python3 -m child.train --stage russian_core --steps 800 --resume checkpoints/child_latest.pt`.

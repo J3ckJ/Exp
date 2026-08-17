@@ -52,6 +52,7 @@ def parse_args() -> argparse.Namespace:
         default=400,
         help="Print a recitation every N steps. 0 disables.",
     )
+    parser.add_argument("--skip-exam", action="store_true")
     return parser.parse_args()
 
 
@@ -87,7 +88,8 @@ def main() -> None:
     else:
         print(f"Child is born. parameters={n_params:,}  device={device}")
 
-    exam(model, "before today's lessons")
+    if not args.skip_exam:
+        exam(model, "before today's lessons")
     lessons = SCHOOL_DAY if args.stage is None else ((args.stage, args.steps, args.lr),)
     out_path = Path(args.out)
     last_stage = lessons[-1][0]
@@ -126,7 +128,8 @@ def main() -> None:
             )
         print(f"Saved {out_path}")
 
-    exam(model, "after school")
+    if not args.skip_exam:
+        exam(model, "after school")
 
 
 if __name__ == "__main__":
