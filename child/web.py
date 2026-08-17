@@ -6,7 +6,7 @@ from html import unescape
 from pathlib import Path
 from typing import Sequence
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlparse
+from urllib.parse import quote, unquote, urlparse, urlsplit, urlunsplit
 from urllib.request import Request, urlopen
 
 ALLOWED_HOSTS = (
@@ -53,6 +53,13 @@ def host_allowed(url: str) -> bool:
     return any(host == allowed or host.endswith("." + allowed) for allowed in ALLOWED_HOSTS)
 
 
+def encode_url(url: str) -> str:
+    parts = urlsplit(url)
+    path = quote(unquote(parts.path), safe="/")
+    query = quote(unquote(parts.query), safe="=&")
+    return urlunsplit((parts.scheme, parts.netloc, path, query, parts.fragment))
+
+
 def strip_html(raw: str) -> str:
     raw = re.sub(r"(?is)<script[^>]*>.*?</script>", " ", raw)
     raw = re.sub(r"(?is)<style[^>]*>.*?</style>", " ", raw)
@@ -63,7 +70,7 @@ def strip_html(raw: str) -> str:
 def fetch_url(url: str) -> str:
     if not host_allowed(url):
         raise ValueError(f"Host not allowed: {url}")
-    request = Request(url, headers={"User-Agent": USER_AGENT})
+    request = Request(encode_url(url), headers={"User-Agent": USER_AGENT})
     with urlopen(request, timeout=20) as response:
         data = response.read(MAX_BYTES + 1)
         ctype = response.headers.get("Content-Type", "")

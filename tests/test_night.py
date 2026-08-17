@@ -1,7 +1,7 @@
 import unittest
 
 from child.curriculum import load_stage
-from child.web import host_allowed
+from child.web import encode_url, host_allowed
 from child.wish import is_learn_command, parse_wish
 
 
@@ -25,6 +25,14 @@ class NightTests(unittest.TestCase):
         self.assertTrue(host_allowed("https://docs.python.org/3/tutorial/introduction.html"))
         self.assertTrue(host_allowed("https://en.wikipedia.org/api/rest_v1/page/summary/Hello"))
         self.assertFalse(host_allowed("https://evil.example/steal"))
+
+    def test_cyrillic_wiki_url_is_encoded(self) -> None:
+        raw = "https://ru.wikipedia.org/api/rest_v1/page/summary/Земля"
+        encoded = encode_url(raw)
+        self.assertNotIn("Земля", encoded)
+        self.assertIn("%", encoded)
+        self.assertTrue(encoded.startswith("https://ru.wikipedia.org/"))
+        self.assertEqual(encode_url(encoded), encoded)
 
     def test_english_school_keeps_russian(self) -> None:
         text = load_stage("english_school")
