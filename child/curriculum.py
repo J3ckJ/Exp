@@ -407,6 +407,11 @@ def build_python_school() -> str:
     return python_body() + english_body() + _join(list(_GOLD) + list(_STORIES), 4)
 
 
+def build_recite_all() -> str:
+    """After a new language, sing the old songs so hello does not become print."""
+    return build_russian_talk() + english_body() + python_body()
+
+
 CURRICULUM: dict[str, Callable[[], str]] = {
     "russian_yasli": build_russian_yasli,
     "russian_core": build_russian_core,
@@ -418,6 +423,7 @@ CURRICULUM: dict[str, Callable[[], str]] = {
     "english_school": build_english_school,
     "python_placeholder": build_python_placeholder,
     "python_school": build_python_school,
+    "recite_all": build_recite_all,
 }
 
 

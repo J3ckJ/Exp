@@ -112,3 +112,36 @@
 
 
 
+
+## Самоучка: поучи python в интернете
+
+2026-08-17 22:45 UTC. Источники: python-3-tutorial-introduction-html.txt, python-api-rest-v1-page-summary-Python-programm.txt. Новых байт практики: 103428. Шагов: 1000. Loss: 1.0855.
+
+В мозг-тетрадь дописал:
+- An Informal Introduction to Python — Python 3.14.7 documentation
+- Theme
+- Auto
+- Light
+- Dark
+- Table of Contents
+- An Informal Introduction to Python
+- 3.1.
+- Using Python as a Calculator
+- 3.1.1.
+- Numbers
+- 3.1.2.
+
+(Куски меню сайта. Позже фильтр выкидывает Theme/Dark/3.1.)
+
+## Ночь: три языка и интернет
+
+Пока человек спал. Тело то же: preschooler, 2.76 млн параметров.
+
+1. Английский, русский не выключая. Hello / How are you? / My name is Child. Привет остался Привет.
+2. Python как байты. What is print? / Write hello. Сначала Привет чуть стал print — повторили все три языка.
+3. Сам сходил в интернет: «поучи python в интернете» → Wikipedia + docs.python.org (белый список).
+
+Сказать учиться: `python3 -m child.chat --say "поучи python в интернете"` или `python3 -m child.learn --wish "..." --web`.
+
+Это не взрослый ИИ. Это петля: маленькое тело + тетрадь .md + сам берёт тексты.
+

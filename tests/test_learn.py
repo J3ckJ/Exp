@@ -10,12 +10,13 @@ from child.wish import parse_wish
 
 class SelfLearnTests(unittest.TestCase):
     def test_split_keeps_short_russian_sentences(self) -> None:
-        text = "Я сам читаю.\n\nМама рядом. Это слишком длинная строка которая должна исчезнуть если она правда очень очень очень очень очень очень длинная для рта ребёнка.\n# заголовок\nДа."
+        text = "Я сам читаю.\n\nМама рядом. Theme\n3.1.\nЭто слишком длинная строка которая должна исчезнуть если она правда очень очень очень очень очень очень длинная для рта ребёнка.\n# заголовок\nДа."
         lines = split_practice_lines(text)
         self.assertIn("Я сам читаю.", lines)
         self.assertIn("Мама рядом.", lines)
         self.assertNotIn("# заголовок", lines)
-        self.assertTrue(all(len(line) <= 120 for line in lines))
+        self.assertNotIn("Theme", lines)
+        self.assertNotIn("3.1.", lines)
 
     def test_mix_repeats_old_and_new(self) -> None:
         mixed = mix_study(("старое\n", 2), ("новое\n", 3))

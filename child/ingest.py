@@ -28,6 +28,30 @@ def read_utf8(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
+_SKIP_LINES = {
+    "theme",
+    "auto",
+    "light",
+    "dark",
+    "this page",
+    "report a bug",
+    "improve this page",
+    "table of contents",
+    "previous topic",
+    "next topic",
+    "contents",
+}
+
+
+def is_practice_line(line: str) -> bool:
+    if line.casefold() in _SKIP_LINES:
+        return False
+    if re.fullmatch(r"\d+(\.\d+)*\.?", line):
+        return False
+    letters = sum(ch.isalpha() for ch in line)
+    return letters >= 3
+
+
 def split_practice_lines(text: str) -> list[str]:
     """Cut a book into sentences a tiny child can chew."""
     normalized = text.replace("\r\n", "\n").replace("\r", "\n")
@@ -39,6 +63,8 @@ def split_practice_lines(text: str) -> list[str]:
         if len(line) < 4 or len(line) > 120:
             continue
         if line.startswith("#"):
+            continue
+        if not is_practice_line(line):
             continue
         if line in seen:
             continue

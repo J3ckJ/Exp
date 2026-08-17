@@ -65,5 +65,19 @@
 Ты: Почему небо голубое?
 Я: Я ещё маленький. Я не знаю.
 Ты: Hello
-Я: Привет. Я говорю по-русски.
+Я: Hello. How are you?
 
+## Английский
+
+Hello.
+How are you?
+I am fine. Thank you.
+My name is Child.
+Mama eats an apple.
+
+## Python
+
+print writes text.
+print("hello")
+Python is a language.
+Python is a high-level programming language.
