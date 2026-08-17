@@ -5,6 +5,7 @@ from typing import Callable, Sequence
 from child.english import english_body
 from child.python_lang import python_body
 from child.talk import format_pair
+from child.world import world_body
 
 # First school: simple Russian a child can hear many times.
 # Yasli kept as the newborn lesson. Later stages overwrite bad
@@ -409,7 +410,11 @@ def build_python_school() -> str:
 
 def build_recite_all() -> str:
     """After a new language, sing the old songs so hello does not become print."""
-    return build_russian_talk() + english_body() + python_body()
+    return build_russian_talk() + english_body() + python_body() + world_body()
+
+
+def build_world_school() -> str:
+    return world_body() + build_russian_talk() + english_body()
 
 
 CURRICULUM: dict[str, Callable[[], str]] = {
@@ -424,6 +429,7 @@ CURRICULUM: dict[str, Callable[[], str]] = {
     "python_placeholder": build_python_placeholder,
     "python_school": build_python_school,
     "recite_all": build_recite_all,
+    "world_school": build_world_school,
 }
 
 
