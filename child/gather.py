@@ -22,9 +22,7 @@ def gather_all(
     if INBOX.exists():
         paths.append(INBOX)
     if use_web or parsed.use_web:
-        fetch_wish_texts(parsed.topic, extra_urls)
-        if WEB_DIR.exists():
-            paths.append(WEB_DIR)
+        paths.extend(fetch_wish_texts(parsed.topic, extra_urls))
     return paths
 
 

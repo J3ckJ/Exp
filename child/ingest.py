@@ -40,11 +40,25 @@ _SKIP_LINES = {
     "previous topic",
     "next topic",
     "contents",
+    "show source",
+    "navigation",
+    "index",
+    "modules |",
+    "next |",
+    "previous |",
+    "numbers",
+    "text",
+    "lists",
 }
 
 
 def is_practice_line(line: str) -> bool:
-    if line.casefold() in _SKIP_LINES:
+    low = line.casefold()
+    if low in _SKIP_LINES:
+        return False
+    if line.endswith(("»", "|", "¶")):
+        return False
+    if ">>>" in line or ("…" in line and "prompt" in low):
         return False
     if re.fullmatch(r"\d+(\.\d+)*\.?", line):
         return False

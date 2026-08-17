@@ -98,9 +98,9 @@ def urls_for_wish(topic: str, extra_urls: Sequence[str]) -> list[str]:
     return urls[:6]
 
 
-def fetch_wish_texts(topic: str, extra_urls: Sequence[str] = ()) -> list[tuple[str, str]]:
+def fetch_wish_texts(topic: str, extra_urls: Sequence[str] = ()) -> list[Path]:
     WEB_DIR.mkdir(parents=True, exist_ok=True)
-    found: list[tuple[str, str]] = []
+    found: list[Path] = []
     for url in urls_for_wish(topic, extra_urls):
         try:
             text = fetch_url(url)
@@ -113,6 +113,6 @@ def fetch_wish_texts(topic: str, extra_urls: Sequence[str] = ()) -> list[tuple[s
         slug = re.sub(r"[^a-zA-Z0-9]+", "-", urlparse(url).path).strip("-")[:40]
         path = WEB_DIR / f"{topic}-{slug or 'page'}.txt"
         path.write_text(text, encoding="utf-8")
-        found.append((url, text))
+        found.append(path)
         print(f"fetched {url} -> {path} ({len(text)} chars)")
     return found

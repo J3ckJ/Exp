@@ -107,4 +107,7 @@ Water is an inorganic compound with the formula H2O.
 
 ## Запомнил
 
-Москва́ — столица России, город федерального значения, административный центр Центрального федерального округа и центр Московской области, в состав которой не входит.
+Москва — столица России, город федерального значения.
+Земля — третья планета от Солнца.
+The Sun is the star at the centre of the Solar System.
+Water is an inorganic compound with the formula H2O.

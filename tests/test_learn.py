@@ -17,6 +17,7 @@ class SelfLearnTests(unittest.TestCase):
         self.assertNotIn("# заголовок", lines)
         self.assertNotIn("Theme", lines)
         self.assertNotIn("3.1.", lines)
+        self.assertNotIn("Navigation", split_practice_lines("Navigation\nShow source\nМама рядом."))
 
     def test_mix_repeats_old_and_new(self) -> None:
         mixed = mix_study(("старое\n", 2), ("новое\n", 3))
