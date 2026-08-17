@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Callable, Sequence
 
+from child.talk import format_pair
+
 # First school: simple Russian a child can hear many times.
 # Yasli kept as the newborn lesson. Later stages overwrite bad
 # cartesian habits: a teacher does not say "читает яблоко".
@@ -180,6 +182,48 @@ _GOLD = (
     "Где мама? Мама дома.",
 )
 
+# Short turns a child can answer. Not ChatGPT. A person in the room.
+_TALK_PAIRS: tuple[tuple[str, str], ...] = (
+    ("Привет", "Привет."),
+    ("Привет", "Привет. Как дела?"),
+    ("Здравствуй", "Здравствуй."),
+    ("Как дела?", "Хорошо."),
+    ("Как дела?", "Хорошо. Спасибо."),
+    ("Как тебя зовут?", "Меня зовут Ребёнок."),
+    ("Кто ты?", "Меня зовут Ребёнок."),
+    ("Что ты делаешь?", "Я учусь говорить."),
+    ("Что ты делаешь?", "Я сам читаю."),
+    ("Ты меня слышишь?", "Да. Я слушаю."),
+    ("Ты здесь?", "Да. Я здесь."),
+    ("Кто я?", "Ты друг."),
+    ("Спасибо", "Пожалуйста."),
+    ("Пока", "Пока."),
+    ("Спокойной ночи", "Спокойной ночи."),
+    ("Доброе утро", "Доброе утро."),
+    ("Где мама?", "Мама дома."),
+    ("Где папа?", "Папа в саду."),
+    ("Кто это?", "Это мама."),
+    ("Что это?", "Это дом."),
+    ("Что делает мама?", "Мама читает книгу."),
+    ("Что делает папа?", "Папа пьёт чай."),
+    ("Что ест мама?", "Мама ест яблоко."),
+    ("Что пьёт папа?", "Папа пьёт чай."),
+    ("Любишь маму?", "Да. Я люблю маму."),
+    ("Расскажи про маму", "Мама дома. Мама читает книгу."),
+    ("Ты умный?", "Я ещё маленький. Я учусь."),
+    ("Почему?", "Я ещё маленький. Спроси иначе."),
+    ("Что ты любишь?", "Я люблю маму."),
+    ("Мы дома?", "Да. Мы дома."),
+    ("Помоги", "Я рядом. Я слушаю."),
+    ("Я люблю тебя", "Я тоже. Я здесь."),
+)
+
+_TALK_TWO_TURNS = (
+    format_pair("Привет", "Привет. Как дела?") + format_pair("Хорошо", "Я рад."),
+    format_pair("Как дела?", "Хорошо. Спасибо.") + format_pair("А ты?", "Тоже хорошо."),
+    format_pair("Кто ты?", "Меня зовут Ребёнок.") + format_pair("Что ты делаешь?", "Я учусь говорить."),
+)
+
 
 def _join(lines: Sequence[str], repeats: int) -> str:
     text = "\n".join(lines)
@@ -243,6 +287,15 @@ def build_russian_recitation() -> str:
     return _join(lines, 16)
 
 
+def build_russian_talk() -> str:
+    """Turn-taking. Rehearse old Russian so speech does not erase the world."""
+    turns = [format_pair(user, child) for user, child in _TALK_PAIRS]
+    turns.extend(_TALK_TWO_TURNS)
+    dialogue = "".join(turns) * 10
+    memory = _join(list(_GOLD) + list(_STORIES), 4)
+    return memory + dialogue
+
+
 def build_english_placeholder() -> str:
     return (
         "Hello.\n"
@@ -263,6 +316,7 @@ CURRICULUM: dict[str, Callable[[], str]] = {
     "russian_core": build_russian_core,
     "russian_school": build_russian_school,
     "russian_recitation": build_russian_recitation,
+    "russian_talk": build_russian_talk,
     "english_placeholder": build_english_placeholder,
     "python_placeholder": build_python_placeholder,
 }

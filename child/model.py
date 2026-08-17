@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from typing import Optional
+from typing import Optional, Sequence
 
 import torch
 import torch.nn as nn
@@ -130,8 +130,10 @@ class Child(nn.Module):
         max_new_bytes: int,
         temperature: float = 1.0,
         top_k: Optional[int] = 40,
+        stop_bytes: Optional[Sequence[int]] = None,
     ) -> torch.Tensor:
         self.eval()
+        stops = set(stop_bytes or ())
         for _ in range(max_new_bytes):
             idx_cond = idx[:, -self.config.block_size :]
             logits, _ = self(idx_cond)
@@ -142,6 +144,8 @@ class Child(nn.Module):
             probs = F.softmax(logits, dim=-1)
             next_byte = torch.multinomial(probs, num_samples=1)
             idx = torch.cat((idx, next_byte), dim=1)
+            if int(next_byte.item()) in stops:
+                break
         return idx
 
     def count_parameters(self) -> int:

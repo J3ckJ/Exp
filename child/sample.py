@@ -3,6 +3,8 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+import torch
+
 from child.bytes_io import bytes_to_text, text_to_bytes
 from child.lesson import DEFAULT_CHECKPOINT, load_child
 

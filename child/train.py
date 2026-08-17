@@ -33,7 +33,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument(
         "--resume",
-        default="checkpoints/child_russian_yasli.pt",
+        default=str(DEFAULT_CHECKPOINT),
         help="Previous body. Empty string starts a newborn.",
     )
     parser.add_argument("--out", default=str(DEFAULT_CHECKPOINT))
@@ -51,6 +51,10 @@ def main() -> None:
     torch.manual_seed(args.seed)
     device = torch.device("cpu")
     resume = Path(args.resume) if args.resume else None
+    if resume is not None and not resume.exists():
+        yasli = Path("checkpoints/child_russian_yasli.pt")
+        if yasli.exists():
+            resume = yasli
     model, _payload, total_steps = load_child(resume, device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
     n_params = model.count_parameters()
