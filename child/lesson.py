@@ -116,6 +116,15 @@ def load_child(
     return model, payload, total_steps
 
 
+def checkpoint_status(path: Path = DEFAULT_CHECKPOINT) -> str:
+    if not path.exists():
+        return "Я ещё не учился."
+    payload = torch.load(path, map_location="cpu", weights_only=False)
+    steps = int(payload.get("total_steps") or payload.get("steps") or 0)
+    stage = str(payload.get("stage") or "не знаю")
+    return f"Я учился {steps} шагов. Последний урок: {stage}."
+
+
 def teach_text(
     model: Child,
     optimizer: torch.optim.Optimizer,

@@ -38,6 +38,12 @@ class JarvisTests(unittest.TestCase):
         self.assertIn("Мама читает книгу.", text)
         self.assertIn("Hello.", text)
 
+    def test_status_tool(self) -> None:
+        text = route_tools("сколько шагов")
+        self.assertIsNotNone(text)
+        assert text is not None
+        self.assertIn("шагов", text)
+
     def test_wiki_host_still_allowed(self) -> None:
         self.assertTrue(host_allowed("https://ru.wikipedia.org/api/rest_v1/page/summary/Москва"))
 

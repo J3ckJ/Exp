@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 
 from child.learn import run_night
+from child.lesson import checkpoint_status
 from child.memory import know, remember, retrieve
 from child.talk import format_prompt
 from child.tools import lookup, moscow_date, moscow_now, safe_calc
@@ -46,6 +47,13 @@ LOOKUP_MARKERS = (
     "what is the capital",
 )
 CALC_MARKERS = ("сколько будет", "посчитай", "compute", "calculate")
+STATUS_MARKERS = (
+    "сколько шагов",
+    "какой урок",
+    "что учил",
+    "how many steps",
+    "what did you study",
+)
 
 
 def _after_marker(text: str, markers: tuple[str, ...]) -> str:
@@ -61,6 +69,8 @@ def route_tools(user: str) -> str | None:
     low = user.casefold().strip()
     if any(marker in low for marker in TIME_MARKERS) or low in {"время", "time"}:
         return f"В Москве сейчас {moscow_now()}."
+    if any(marker in low for marker in STATUS_MARKERS):
+        return checkpoint_status()
     if any(marker in low for marker in DATE_MARKERS) or low in {"дата", "date"}:
         return f"Сегодня {moscow_date()}."
     if any(marker in low for marker in REMEMBER_MARKERS):
