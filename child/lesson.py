@@ -21,6 +21,8 @@ EXAM_PROMPTS = (
     "Мама читает",
     "Доброе ",
     "Где мама?",
+    "Я ",
+    "Я учусь",
 )
 
 
@@ -90,25 +92,26 @@ def load_child(
     return model, payload, total_steps
 
 
-def teach(
+def teach_text(
     model: Child,
     optimizer: torch.optim.Optimizer,
-    stage: str,
+    text: str,
+    label: str,
     steps: int,
     batch_size: int,
     sample_every: int,
     start_step: int,
 ) -> float:
-    data = text_to_bytes(load_stage(stage))
+    data = text_to_bytes(text)
     block_size = model.config.block_size
     if data.size(0) < block_size + 2:
-        raise SystemExit(f"Curriculum {stage!r} is too short for this block_size.")
+        raise SystemExit(f"Study text {label!r} is too short for this block_size.")
     last_loss = float("nan")
-    print(f"Lesson={stage}  bytes={data.size(0):,}  steps={steps}")
+    device = next(model.parameters()).device
+    print(f"Lesson={label}  bytes={data.size(0):,}  steps={steps}")
     model.train()
     for step in range(1, steps + 1):
         x, y = random_batch(data, batch_size, block_size)
-        device = next(model.parameters()).device
         x, y = x.to(device), y.to(device)
         _logits, loss = model(x, y)
         if loss is None:
@@ -124,15 +127,39 @@ def teach(
         if sample_every and step % sample_every == 0:
             print("--- recitation ---")
             print(babble(model, "Мама ", temperature=0.4))
-            print(babble(model, "Мама читает", temperature=0.4))
+            print(babble(model, "Я ", temperature=0.4))
             model.train()
     return last_loss
 
 
-def exam(model: Child, title: str) -> None:
+def teach(
+    model: Child,
+    optimizer: torch.optim.Optimizer,
+    stage: str,
+    steps: int,
+    batch_size: int,
+    sample_every: int,
+    start_step: int,
+) -> float:
+    return teach_text(
+        model,
+        optimizer,
+        text=load_stage(stage),
+        label=stage,
+        steps=steps,
+        batch_size=batch_size,
+        sample_every=sample_every,
+        start_step=start_step,
+    )
+
+
+def exam(model: Child, title: str) -> list[tuple[str, str]]:
     print(f"=== {title} ===")
+    results: list[tuple[str, str]] = []
     for prompt in EXAM_PROMPTS:
         quiet = babble(model, prompt, max_new_bytes=80, temperature=0.35)
+        results.append((prompt, quiet))
         print(f"[{prompt!r}]")
         print(quiet)
         print()
+    return results

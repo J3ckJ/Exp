@@ -268,6 +268,10 @@ CURRICULUM: dict[str, Callable[[], str]] = {
 }
 
 
+def gold_lines() -> tuple[str, ...]:
+    return _GOLD
+
+
 def load_stage(name: str) -> str:
     builder = CURRICULUM.get(name)
     if builder is None:
