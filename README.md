@@ -17,19 +17,25 @@
 
 ## Школа
 
-1. `russian_yasli` — простые русские фразы. **Сейчас учим это.**
-2. `english_placeholder` — английский, позже, не забывая русский.
-3. `python_placeholder` — код, ещё позже.
+1. `russian_yasli` — первый день. Все сочетания подряд. Ребёнок начал лепетать, но путает «читает яблоко».
+2. `russian_core` / `russian_school` / `russian_recitation` — настоящий учебный день: только живые пары, диалоги, короткие истории, повтор золотых фраз.
+3. `english_placeholder` — английский, позже, не забывая русский.
+4. `python_placeholder` — код, ещё позже.
+
+Учитель не рождает ребёнка заново. `python3 -m child.train` продолжает с чекпоинта.
 
 ## Запуск
 
 ```bash
 python3 -m pip install -r requirements.txt
 python3 -m unittest discover -s tests -t .
-python3 -m child.train --stage russian_yasli --steps 800
+python3 -m child.train
+python3 -m child.exam
 python3 -m child.sample --prompt "Мама "
 ```
 
-После урока чекпоинт лежит в `checkpoints/child_russian_yasli.pt`.
+Один урок, если нужно: `python3 -m child.train --stage russian_core --steps 800 --resume checkpoints/child_latest.pt`.
 
-До школы ребёнок выдаёт шум. После короткого урока на простых фразах начинает повторять знакомые куски речи. Это не ChatGPT. Это лепет.
+После школы чекпоинт лежит в `checkpoints/child_latest.pt`.
+
+До школы ребёнок выдаёт шум. После яслей — лепет. После учебного дня должен устойчивее повторять живые фразы. Это не ChatGPT. Это ученик.

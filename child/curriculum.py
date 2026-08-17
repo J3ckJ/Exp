@@ -1,22 +1,24 @@
 from __future__ import annotations
 
-from typing import Callable
+from typing import Callable, Sequence
 
-# First school: simple Russian sentences a child can hear many times.
-# Next ages (english, python) are registered but not taught yet.
+# First school: simple Russian a child can hear many times.
+# Yasli kept as the newborn lesson. Later stages overwrite bad
+# cartesian habits: a teacher does not say "читает яблоко".
 
-_RU_SUBJECTS = (
+
+_PEOPLE = (
     "Мама",
     "Папа",
     "Бабушка",
     "Дедушка",
     "Мальчик",
     "Девочка",
-    "Кошка",
-    "Собака",
     "Учитель",
     "Друг",
 )
+
+_RU_SUBJECTS = _PEOPLE + ("Кошка", "Собака")
 
 _RU_VERBS = (
     "ест",
@@ -93,6 +95,111 @@ _RU_FACTS = (
     "Сначала имя, потом действие.",
 )
 
+# Living collocations only. Food is eaten, books are read, doors open.
+_FRAMES: tuple[tuple[Sequence[str], Sequence[str], Sequence[str]], ...] = (
+    (_PEOPLE, ("ест",), ("яблоко", "хлеб", "кашу", "суп")),
+    (_PEOPLE, ("пьёт",), ("воду", "молоко", "чай")),
+    (_PEOPLE, ("читает",), ("книгу", "письмо")),
+    (_PEOPLE, ("пишет",), ("письмо",)),
+    (
+        _PEOPLE,
+        ("видит",),
+        ("дом", "окно", "стол", "маму", "папу", "кошку", "солнце"),
+    ),
+    (_PEOPLE, ("любит",), ("маму", "папу", "дом", "кошку")),
+    (_PEOPLE, ("рисует",), ("дом", "солнце", "кошку")),
+    (_PEOPLE, ("моет",), ("окно", "стол", "руки")),
+    (_PEOPLE, ("открывает", "закрывает"), ("окно", "дверь", "книгу")),
+)
+
+_ANIMAL_LINES = (
+    "Кошка ест кашу.",
+    "Кошка пьёт молоко.",
+    "Кошка видит собаку.",
+    "Кошка сидит дома.",
+    "Кошка идёт в сад.",
+    "Собака сидит дома.",
+    "Собака идёт на улице.",
+    "Собака видит кошку.",
+    "Собака любит дом.",
+)
+
+_DIALOGUES = (
+    "Привет.\nПривет. Как дела?\nХорошо. Спасибо.",
+    "Доброе утро.\nДоброе утро. Мы дома.",
+    "Спокойной ночи.\nСпокойной ночи. Ночь тёмная.",
+    "Кто это?\nЭто мама.",
+    "Кто это?\nЭто папа.",
+    "Что это?\nЭто дом.",
+    "Что это?\nЭто книга.",
+    "Где мама?\nМама дома.",
+    "Где папа?\nПапа в саду.",
+    "Что делает мама?\nМама читает книгу.",
+    "Что делает папа?\nПапа пьёт чай.",
+    "Что ест мама?\nМама ест яблоко.",
+    "Что пьёт папа?\nПапа пьёт чай.",
+)
+
+_STORIES = (
+    "Мама дома. Мама читает книгу.",
+    "Папа дома. Папа пьёт чай.",
+    "Мама ест яблоко. Папа ест хлеб.",
+    "Девочка рисует солнце. Мальчик читает книгу.",
+    "Учитель видит окно. Учитель открывает окно.",
+    "Бабушка сидит за столом. Дедушка идёт в сад.",
+    "Кошка пьёт молоко. Собака сидит дома.",
+    "Я здесь. Я учусь говорить.",
+    "День светлый. Солнце жёлтое.",
+    "Ночь тёмная. Спокойной ночи.",
+    "Мама любит папу. Папа любит маму.",
+    "Ребёнок слушает речь. Слова идут одно за другим.",
+)
+
+_GOLD = (
+    "Привет.",
+    "Здравствуй.",
+    "Доброе утро.",
+    "Мама ест яблоко.",
+    "Папа пьёт чай.",
+    "Мама читает книгу.",
+    "Папа пишет письмо.",
+    "Мама видит дом.",
+    "Мама любит папу.",
+    "Папа любит маму.",
+    "Мама моет окно.",
+    "Папа открывает дверь.",
+    "Мама закрывает окно.",
+    "Кошка пьёт молоко.",
+    "Собака сидит дома.",
+    "Я здесь.",
+    "Это мама.",
+    "Это папа.",
+    "Меня зовут Ребёнок.",
+    "Я учусь говорить.",
+    "Кто это? Это мама.",
+    "Что делает мама? Мама читает книгу.",
+    "Где мама? Мама дома.",
+)
+
+
+def _join(lines: Sequence[str], repeats: int) -> str:
+    text = "\n".join(lines)
+    return (text + "\n") * repeats
+
+
+def _frame_lines() -> list[str]:
+    lines: list[str] = []
+    for subjects, verbs, objects in _FRAMES:
+        for subject in subjects:
+            for verb in verbs:
+                for obj in objects:
+                    lines.append(f"{subject} {verb} {obj}.")
+    for subject in _PEOPLE:
+        for place in _RU_PLACES:
+            lines.append(f"{subject} сидит {place}.")
+            lines.append(f"{subject} идёт {place}.")
+    return lines
+
 
 def build_russian_yasli() -> str:
     lines: list[str] = list(_RU_GREETINGS) + list(_RU_FACTS)
@@ -103,9 +210,32 @@ def build_russian_yasli() -> str:
         for place in _RU_PLACES:
             lines.append(f"{subject} сидит {place}.")
             lines.append(f"{subject} идёт {place}.")
-    # Repeat the core so the tiny child hears the same patterns often.
-    text = "\n".join(lines)
-    return (text + "\n") * 3
+    return _join(lines, 3)
+
+
+def build_russian_core() -> str:
+    """Drill the sentences a child should say without thinking."""
+    lines = list(_RU_GREETINGS) + list(_RU_FACTS) + list(_GOLD)
+    return _join(lines, 12)
+
+
+def build_russian_school() -> str:
+    """A full Russian day: living frames, talk, stories, old greetings."""
+    lines: list[str] = []
+    lines.extend(_RU_GREETINGS)
+    lines.extend(_RU_FACTS)
+    lines.extend(_frame_lines())
+    lines.extend(_ANIMAL_LINES)
+    lines.extend(_DIALOGUES)
+    lines.extend(_STORIES)
+    lines.extend(_GOLD)
+    return _join(lines, 4)
+
+
+def build_russian_recitation() -> str:
+    """Quiet recitation at the end of the day. Gold only, many times."""
+    lines = list(_GOLD) + list(_DIALOGUES) + list(_STORIES)
+    return _join(lines, 16)
 
 
 def build_english_placeholder() -> str:
@@ -125,6 +255,9 @@ def build_python_placeholder() -> str:
 
 CURRICULUM: dict[str, Callable[[], str]] = {
     "russian_yasli": build_russian_yasli,
+    "russian_core": build_russian_core,
+    "russian_school": build_russian_school,
+    "russian_recitation": build_russian_recitation,
     "english_placeholder": build_english_placeholder,
     "python_placeholder": build_python_placeholder,
 }

@@ -85,8 +85,11 @@ class Child(nn.Module):
         self.blocks = nn.ModuleList([Block(config) for _ in range(config.n_layer)])
         self.ln_f = nn.LayerNorm(config.n_embd)
         self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
-        self.token_emb.weight = self.lm_head.weight
+        self.tie_weights()
         self.apply(self._init_weights)
+
+    def tie_weights(self) -> None:
+        self.token_emb.weight = self.lm_head.weight
 
     def _init_weights(self, module: nn.Module) -> None:
         if isinstance(module, nn.Linear):

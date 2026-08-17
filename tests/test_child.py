@@ -41,6 +41,22 @@ class ChildTests(unittest.TestCase):
         self.assertIn("Мама", text)
         self.assertIn("Привет", text)
 
+    def test_school_teaches_living_collocations(self) -> None:
+        school = load_stage("russian_school")
+        core = load_stage("russian_core")
+        for text in (school, core):
+            self.assertIn("Мама ест яблоко.", text)
+            self.assertIn("Мама читает книгу.", text)
+            self.assertIn("Папа пьёт чай.", text)
+            self.assertNotIn("Мама читает яблоко.", text)
+            self.assertNotIn("Мама ест дом.", text)
+        self.assertIn("Что делает мама?", school)
+        self.assertIn("Мама дома. Мама читает книгу.", school)
+
+    def test_unknown_stage_is_rejected(self) -> None:
+        with self.assertRaises(KeyError):
+            load_stage("martian_lullaby")
+
 
 if __name__ == "__main__":
     unittest.main()
