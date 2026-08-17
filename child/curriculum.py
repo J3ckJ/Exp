@@ -106,7 +106,6 @@ _FRAMES: tuple[tuple[Sequence[str], Sequence[str], Sequence[str]], ...] = (
         ("видит",),
         ("дом", "окно", "стол", "маму", "папу", "кошку", "солнце"),
     ),
-    (_PEOPLE, ("любит",), ("маму", "папу", "дом", "кошку")),
     (_PEOPLE, ("рисует",), ("дом", "солнце", "кошку")),
     (_PEOPLE, ("моет",), ("окно", "стол", "руки")),
     (_PEOPLE, ("открывает", "закрывает"), ("окно", "дверь", "книгу")),
@@ -195,6 +194,12 @@ def _frame_lines() -> list[str]:
                 for obj in objects:
                     lines.append(f"{subject} {verb} {obj}.")
     for subject in _PEOPLE:
+        if subject != "Мама":
+            lines.append(f"{subject} любит маму.")
+        if subject != "Папа":
+            lines.append(f"{subject} любит папу.")
+        lines.append(f"{subject} любит дом.")
+        lines.append(f"{subject} любит кошку.")
         for place in _RU_PLACES:
             lines.append(f"{subject} сидит {place}.")
             lines.append(f"{subject} идёт {place}.")

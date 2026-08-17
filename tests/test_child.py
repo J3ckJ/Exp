@@ -48,8 +48,10 @@ class ChildTests(unittest.TestCase):
             self.assertIn("Мама ест яблоко.", text)
             self.assertIn("Мама читает книгу.", text)
             self.assertIn("Папа пьёт чай.", text)
+            self.assertIn("Папа любит маму.", text)
             self.assertNotIn("Мама читает яблоко.", text)
             self.assertNotIn("Мама ест дом.", text)
+            self.assertNotIn("Папа любит папу.", text)
         self.assertIn("Что делает мама?", school)
         self.assertIn("Мама дома. Мама читает книгу.", school)
 
