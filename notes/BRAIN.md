@@ -81,3 +81,26 @@ print writes text.
 print("hello")
 Python is a language.
 Python is a high-level programming language.
+
+## Мир
+
+Столица России — Москва.
+Москва в России.
+Столица Англии — Лондон.
+Земля — планета.
+Солнце — звезда.
+Луна светит ночью.
+Вода мокрая.
+The Earth is a planet.
+The Sun is a star.
+London is the capital of England.
+Moscow is the capital of Russia.
+Water is an inorganic compound with the formula H2O.
+
+## Запомнил
+
+Хозяина зовут Евгений.
+Я умею смотреть время.
+Я умею считать.
+Я умею запоминать.
+Я говорю, помню, смотрю и считаю.

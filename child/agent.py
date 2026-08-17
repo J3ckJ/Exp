@@ -3,9 +3,9 @@ from __future__ import annotations
 import re
 
 from child.learn import run_night
-from child.memory import remember, retrieve
+from child.memory import know, remember, retrieve
 from child.talk import format_prompt
-from child.tools import lookup, moscow_now, safe_calc
+from child.tools import lookup, moscow_date, moscow_now, safe_calc
 from child.wish import is_learn_command, parse_wish
 
 TIME_MARKERS = (
@@ -17,7 +17,25 @@ TIME_MARKERS = (
     "time in moscow",
     "сколько сейчас",
 )
+DATE_MARKERS = (
+    "какое сегодня число",
+    "какая сегодня дата",
+    "какой сегодня день",
+    "what date",
+    "today's date",
+    "what day is it",
+    "какой день недели",
+)
 REMEMBER_MARKERS = ("запомни", "запомнить", "remember that", "remember:")
+KNOW_MARKERS = (
+    "что ты знаешь",
+    "что ты помнишь",
+    "что помнишь",
+    "что знаешь про",
+    "расскажи что знаешь",
+    "what do you know",
+    "what do you remember",
+)
 LOOKUP_MARKERS = (
     "узнай",
     "найди",
@@ -43,6 +61,8 @@ def route_tools(user: str) -> str | None:
     low = user.casefold().strip()
     if any(marker in low for marker in TIME_MARKERS) or low in {"время", "time"}:
         return f"В Москве сейчас {moscow_now()}."
+    if any(marker in low for marker in DATE_MARKERS) or low in {"дата", "date"}:
+        return f"Сегодня {moscow_date()}."
     if any(marker in low for marker in REMEMBER_MARKERS):
         fact = _after_marker(user, REMEMBER_MARKERS)
         return remember(fact or user)
@@ -51,6 +71,9 @@ def route_tools(user: str) -> str | None:
         value = safe_calc(expr)
         if value:
             return value
+    if any(marker in low for marker in KNOW_MARKERS):
+        query = _after_marker(user, KNOW_MARKERS) or user
+        return know(query)
     if any(marker in low for marker in LOOKUP_MARKERS):
         query = _after_marker(user, LOOKUP_MARKERS) or user
         query = re.sub(r"^(что такое|who is|look up)\s+", "", query, flags=re.I).strip(" ?")
@@ -97,7 +120,10 @@ def jarvis_pairs() -> list[tuple[str, str]]:
     """Short tool-talk so the mouth can mention hands, not only school."""
     return [
         ("Который час?", "Сейчас скажу время."),
+        ("Какое сегодня число?", "Сейчас скажу дату."),
         ("Запомни это", "Запомнил."),
         ("Узнай в интернете", "Сейчас посмотрю."),
+        ("Что ты знаешь?", "Сейчас посмотрю в тетради."),
         ("Посчитай", "Сейчас посчитаю."),
+        ("Что ты умеешь?", "Я говорю, помню, смотрю и считаю."),
     ]

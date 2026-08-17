@@ -54,6 +54,8 @@ def parse_wish(text: str) -> Wish:
         topic = "english"
     elif any(word in low for word in ("русск", "russian")):
         topic = "russian"
+    elif any(word in low for word in ("мир", "world", "земл", "москв", "солнц", "географ")):
+        topic = "world"
     query = _query_from(text, topic)
     return Wish(raw=text.strip(), topic=topic, use_web=use_web, query=query)
 
@@ -71,6 +73,8 @@ def _query_from(text: str, topic: str) -> str:
         return "English language"
     if topic == "russian":
         return "Русский язык"
+    if topic == "world":
+        return "Earth Moscow Sun"
     return "learning"
 
 

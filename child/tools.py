@@ -7,7 +7,6 @@ from datetime import datetime
 from urllib.parse import quote
 from zoneinfo import ZoneInfo
 
-from child.ingest import split_practice_lines
 from child.memory import remember
 from child.web import fetch_url, host_allowed
 
@@ -21,9 +20,57 @@ _OPS = {
 }
 
 
+_WEEKDAYS_RU = (
+    "понедельник",
+    "вторник",
+    "среда",
+    "четверг",
+    "пятница",
+    "суббота",
+    "воскресенье",
+)
+
+
 def moscow_now() -> str:
     now = datetime.now(ZoneInfo("Europe/Moscow"))
     return now.strftime("%H:%M, %d.%m.%Y")
+
+
+def moscow_date() -> str:
+    now = datetime.now(ZoneInfo("Europe/Moscow"))
+    weekday = _WEEKDAYS_RU[now.weekday()]
+    return f"{weekday}, {now.strftime('%d.%m.%Y')}"
+
+
+def first_fact(text: str, query: str = "") -> str:
+    """Keep the useful first sentence, even if it is longer than a school line."""
+    blob = " ".join(text.split())
+    parts = [part.strip() for part in re.split(r"(?<=[.!?])\s+", blob) if part.strip()]
+    if not parts:
+        return blob[:220]
+    q_tokens = {
+        token
+        for token in re.findall(r"[A-Za-zА-Яа-яЁё0-9]+", query.casefold())
+        if len(token) > 2
+    }
+    best = parts[0]
+    best_score = -1
+    for part in parts[:8]:
+        if len(part) < 12:
+            continue
+        tokens = {
+            token
+            for token in re.findall(r"[A-Za-zА-Яа-яЁё0-9]+", part.casefold())
+            if len(token) > 2
+        }
+        score = len(q_tokens & tokens)
+        if score > best_score:
+            best = part
+            best_score = score
+    if len(best) > 220:
+        clipped = best[:217].rsplit(" ", 1)[0]
+        return clipped + "…"
+    return best
 
 
 def safe_calc(expr: str) -> str:
@@ -79,7 +126,6 @@ def lookup(query: str) -> str:
     if not texts:
         return "Не нашёл. Скажи иначе."
     extract = texts[0].strip()
-    first = split_practice_lines(extract)
-    fact = first[0] if first else extract[:180]
+    fact = first_fact(extract, title)
     remember(fact)
     return fact

@@ -35,6 +35,13 @@ TOPIC_PAGES: dict[str, tuple[str, ...]] = {
         "https://ru.wikipedia.org/api/rest_v1/page/summary/Русский_язык",
         "https://ru.wikipedia.org/api/rest_v1/page/summary/Мама",
     ),
+    "world": (
+        "https://ru.wikipedia.org/api/rest_v1/page/summary/Земля",
+        "https://simple.wikipedia.org/api/rest_v1/page/summary/Earth",
+        "https://ru.wikipedia.org/api/rest_v1/page/summary/Москва",
+        "https://simple.wikipedia.org/api/rest_v1/page/summary/Sun",
+        "https://simple.wikipedia.org/api/rest_v1/page/summary/Water",
+    ),
     "general": (
         "https://simple.wikipedia.org/api/rest_v1/page/summary/Learning",
     ),

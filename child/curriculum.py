@@ -410,7 +410,13 @@ def build_python_school() -> str:
 
 def build_recite_all() -> str:
     """After a new language, sing the old songs so hello does not become print."""
-    return build_russian_talk() + english_body() + python_body() + world_body()
+    return (
+        build_russian_talk()
+        + english_body()
+        + python_body()
+        + python_body()
+        + world_body()
+    )
 
 
 def build_world_school() -> str:

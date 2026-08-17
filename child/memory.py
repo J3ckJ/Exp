@@ -36,7 +36,13 @@ def remember(fact: str) -> str:
 
 
 def _tokens(text: str) -> set[str]:
-    return {part for part in re.findall(r"[A-Za-zА-Яа-яЁё0-9]+", text.casefold()) if len(part) > 2}
+    raw = {
+        part
+        for part in re.findall(r"[A-Za-zА-Яа-яЁё0-9]+", text.casefold())
+        if len(part) > 2
+    }
+    extra = {part[:3] for part in raw if len(part) >= 4}
+    return raw | extra
 
 
 def retrieve(query: str, limit: int = 3) -> list[str]:
@@ -50,3 +56,10 @@ def retrieve(query: str, limit: int = 3) -> list[str]:
             scored.append((overlap, line))
     scored.sort(key=lambda item: (-item[0], len(item[1])))
     return [line for _score, line in scored[:limit]]
+
+
+def know(query: str, limit: int = 3) -> str:
+    hits = retrieve(query, limit=limit)
+    if not hits:
+        return "В тетради этого нет. Скажи «узнай …», я посмотрю."
+    return " ".join(hits)

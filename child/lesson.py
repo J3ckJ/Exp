@@ -34,6 +34,10 @@ EXAM_PROMPTS = (
     "Ты: How are you?\nЯ: ",
     "Ты: What is print?\nЯ: ",
     "Ты: Write hello\nЯ: ",
+    "Ты: What is Python?\nЯ: ",
+    "Ты: Какая столица России?\nЯ: ",
+    "Ты: Что такое Земля?\nЯ: ",
+    "Ты: Что ты умеешь?\nЯ: ",
 )
 
 

@@ -27,6 +27,7 @@ STAGE_FOR_TOPIC = {
     "russian": "russian_power",
     "english": "english_school",
     "python": "python_school",
+    "world": "world_school",
     "general": "russian_power",
 }
 
