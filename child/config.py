@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 @dataclass
 class ChildConfig:
-    """Shape of the newborn: eyes, layers, width. No knowledge lives here."""
+    """Shape of the body: eyes, layers, width. No knowledge lives here."""
 
     vocab_size: int = 256
     block_size: int = 96
@@ -12,3 +12,36 @@ class ChildConfig:
     n_embd: int = 128
     dropout: float = 0.0
     bias: bool = True
+
+
+def toddler_config() -> ChildConfig:
+    return ChildConfig()
+
+
+def preschooler_config() -> ChildConfig:
+    """Growth spurt: longer mouth, wider head, still a child not an adult."""
+    return ChildConfig(
+        vocab_size=256,
+        block_size=192,
+        n_layer=6,
+        n_head=6,
+        n_embd=192,
+        dropout=0.1,
+        bias=True,
+    )
+
+
+AGES: dict[str, ChildConfig] = {
+    "toddler": toddler_config(),
+    "preschooler": preschooler_config(),
+}
+
+
+def configs_match(left: ChildConfig, right: ChildConfig) -> bool:
+    return (
+        left.vocab_size == right.vocab_size
+        and left.block_size == right.block_size
+        and left.n_layer == right.n_layer
+        and left.n_head == right.n_head
+        and left.n_embd == right.n_embd
+    )

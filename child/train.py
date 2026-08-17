@@ -5,6 +5,7 @@ from pathlib import Path
 
 import torch
 
+from child.config import AGES, configs_match
 from child.lesson import (
     DEFAULT_CHECKPOINT,
     exam,
@@ -12,6 +13,7 @@ from child.lesson import (
     save_checkpoint,
     teach,
 )
+from child.model import Child
 
 # A school day: drill, then a full Russian day, then quiet recitation.
 # English and Python stay in the corridor. Not today.
@@ -31,6 +33,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--lr", type=float, default=1.5e-4)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument(
+        "--age",
+        default=None,
+        choices=sorted(AGES),
+        help="Grow a new body if the checkpoint is smaller. toddler or preschooler.",
+    )
     parser.add_argument(
         "--resume",
         default=str(DEFAULT_CHECKPOINT),
@@ -56,6 +64,16 @@ def main() -> None:
         if yasli.exists():
             resume = yasli
     model, _payload, total_steps = load_child(resume, device)
+    if args.age is not None:
+        target = AGES[args.age]
+        if not configs_match(model.config, target):
+            print(
+                f"The child grew. {model.count_parameters():,} -> "
+                f"age={args.age}  block={target.block_size}  "
+                f"layers={target.n_layer}  width={target.n_embd}"
+            )
+            print("Weights start fresh. Memory lives in lessons and notes/BRAIN.md.")
+            model = Child(target).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
     n_params = model.count_parameters()
     if resume is not None and resume.exists():

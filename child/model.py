@@ -21,13 +21,6 @@ class CausalSelfAttention(nn.Module):
         self.c_proj = nn.Linear(config.n_embd, config.n_embd, bias=config.bias)
         self.attn_dropout = nn.Dropout(config.dropout)
         self.resid_dropout = nn.Dropout(config.dropout)
-        self.register_buffer(
-            "mask",
-            torch.tril(torch.ones(config.block_size, config.block_size)).view(
-                1, 1, config.block_size, config.block_size
-            ),
-            persistent=False,
-        )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         batch, time, channels = x.size()
@@ -36,11 +29,10 @@ class CausalSelfAttention(nn.Module):
         q = q.view(batch, time, self.n_head, head_dim).transpose(1, 2)
         k = k.view(batch, time, self.n_head, head_dim).transpose(1, 2)
         v = v.view(batch, time, self.n_head, head_dim).transpose(1, 2)
-        att = (q @ k.transpose(-2, -1)) * (1.0 / math.sqrt(head_dim))
-        att = att.masked_fill(self.mask[:, :, :time, :time] == 0, float("-inf"))
-        att = F.softmax(att, dim=-1)
-        att = self.attn_dropout(att)
-        y = att @ v
+        dropout_p = self.attn_dropout.p if self.training else 0.0
+        y = F.scaled_dot_product_attention(
+            q, k, v, dropout_p=dropout_p, is_causal=True
+        )
         y = y.transpose(1, 2).contiguous().view(batch, time, channels)
         return self.resid_dropout(self.c_proj(y))
 
@@ -93,7 +85,13 @@ class Child(nn.Module):
 
     def _init_weights(self, module: nn.Module) -> None:
         if isinstance(module, nn.Linear):
-            torch.nn.init.normal_(module.weight, mean=0.0, std=0.02)
+            std = 0.02
+            residual = module.weight.shape[0] == self.config.n_embd and module.weight.shape[
+                1
+            ] in (self.config.n_embd, 4 * self.config.n_embd)
+            if residual:
+                std = 0.02 / math.sqrt(2 * self.config.n_layer)
+            torch.nn.init.normal_(module.weight, mean=0.0, std=std)
             if module.bias is not None:
                 torch.nn.init.zeros_(module.bias)
         elif isinstance(module, nn.Embedding):

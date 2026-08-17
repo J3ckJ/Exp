@@ -37,13 +37,16 @@
 5. Самоучка таскает тексты (потом GitHub).
 6. Если понадобится «почти как взрослый» — растит тело. Это уже не ясли.
 
+Возраст `preschooler`: рот 192 байта, 6 слоёв, ширина 192, около 2.8 млн параметров. Всё ещё ребёнок. Не ChatGPT.
+
 ## Школа
 
 1. `russian_yasli` — первый день. Все сочетания подряд. Ребёнок начал лепетать, но путает «читает яблоко».
 2. `russian_core` / `russian_school` / `russian_recitation` — настоящий учебный день: только живые пары, диалоги, короткие истории, повтор золотых фраз.
 3. `russian_talk` — очередь говорить: «Ты: … / Я: …».
-4. `english_placeholder` — английский, позже, не забывая русский.
-5. `python_placeholder` — код, ещё позже.
+4. `russian_power` — плотный день после скачка роста: перефразы, «я не знаю», старый мир.
+5. `english_placeholder` — английский, позже, не забывая русский.
+6. `python_placeholder` — код, ещё позже.
 
 Учитель не рождает ребёнка заново. `python3 -m child.train` продолжает с чекпоинта.
 
@@ -56,7 +59,7 @@ python3 -m child.train
 python3 -m child.exam
 python3 -m child.learn --wish "читать самому" --from data/readers/sam_chitayu.txt
 python3 -m child.sample --prompt "Я "
-python3 -m child.train --stage russian_talk --steps 1800 --resume checkpoints/child_latest.pt
+python3 -m child.train --age preschooler --stage russian_power --steps 3500 --lr 3e-4
 python3 -m child.chat --say "Привет"
 python3 -m child.chat
 ```

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from pathlib import Path
 from typing import Optional
 
@@ -26,6 +27,9 @@ EXAM_PROMPTS = (
     "Ты: Привет\nЯ: ",
     "Ты: Как дела?\nЯ: ",
     "Ты: Кто ты?\nЯ: ",
+    "Ты: Почему небо голубое?\nЯ: ",
+    "Ты: Как тебя зовут?\nЯ: ",
+    "Ты: Ты умный?\nЯ: ",
 )
 
 
@@ -48,10 +52,19 @@ def babble(
 ) -> str:
     device = next(model.parameters()).device
     idx = text_to_bytes(prompt).unsqueeze(0).to(device)
+    stop = (10,) if "Я:" in prompt else None
     out = model.generate(
-        idx, max_new_bytes=max_new_bytes, temperature=temperature, top_k=40
+        idx,
+        max_new_bytes=max_new_bytes,
+        temperature=temperature,
+        top_k=40,
+        stop_bytes=stop,
     )
-    return bytes_to_text(out[0])
+    text = bytes_to_text(out[0])
+    if stop is not None:
+        generated = bytes_to_text(out[0][idx.shape[1] :])
+        return prompt + generated.split("\n", 1)[0]
+    return text
 
 
 def save_checkpoint(
@@ -112,8 +125,13 @@ def teach_text(
     last_loss = float("nan")
     device = next(model.parameters()).device
     print(f"Lesson={label}  bytes={data.size(0):,}  steps={steps}")
+    base_lrs = [float(group["lr"]) for group in optimizer.param_groups]
     model.train()
     for step in range(1, steps + 1):
+        progress = (step - 1) / max(steps - 1, 1)
+        scale = 0.5 * (1.0 + math.cos(math.pi * progress))
+        for group, base in zip(optimizer.param_groups, base_lrs):
+            group["lr"] = max(base * scale, base * 0.08)
         x, y = random_batch(data, batch_size, block_size)
         x, y = x.to(device), y.to(device)
         _logits, loss = model(x, y)
@@ -126,11 +144,13 @@ def teach_text(
         last_loss = float(loss.item())
         shown = start_step + step
         if step == 1 or step % 50 == 0 or step == steps:
-            print(f"step {shown:5d}  loss={last_loss:.4f}")
+            print(
+                f"step {shown:5d}  loss={last_loss:.4f}  lr={optimizer.param_groups[0]['lr']:.2e}"
+            )
         if sample_every and step % sample_every == 0:
             print("--- recitation ---")
             print(babble(model, "Мама ", temperature=0.4))
-            print(babble(model, "Я ", temperature=0.4))
+            print(babble(model, "Ты: Привет\nЯ: ", temperature=0.35, max_new_bytes=60))
             model.train()
     return last_loss
 

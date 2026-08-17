@@ -39,6 +39,22 @@ class TalkTests(unittest.TestCase):
         self.assertGreaterEqual(out.shape[1], idx.shape[1])
         self.assertLessEqual(out.shape[1], idx.shape[1] + 8)
 
+    def test_preschooler_is_still_a_child(self) -> None:
+        from child.config import preschooler_config
+
+        model = Child(preschooler_config())
+        n_params = model.count_parameters()
+        self.assertGreater(n_params, 2_000_000)
+        self.assertLess(n_params, 4_000_000)
+        self.assertEqual(model.config.block_size, 192)
+
+    def test_power_stage_teaches_not_knowing(self) -> None:
+        text = load_stage("russian_power")
+        self.assertIn("Ты: Почему небо голубое?", text)
+        self.assertIn("Я ещё маленький. Я не знаю.", text)
+        self.assertIn("Ты: Приветик", text)
+        self.assertIn("Мама читает книгу.", text)
+
     def test_format_pair_shape(self) -> None:
         self.assertEqual(format_pair("Привет", "Привет."), "Ты: Привет\nЯ: Привет.\n")
 

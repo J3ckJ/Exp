@@ -77,8 +77,8 @@ def main() -> None:
         child = answer(model, user, history, args.temperature, args.n_bytes)
         print(f"я  > {child}")
         history.append((user, child))
-        if len(history) > 4:
-            history = history[-4:]
+        if len(history) > 8:
+            history = history[-8:]
 
 
 if __name__ == "__main__":
