@@ -297,8 +297,9 @@ def search_queries(text: str) -> list[str]:
     if parsed.intent == "structure":
         queries.extend(
             (
-                f"{topic} architecture",
+                f"{topic} site:wikipedia.org",
                 f"{topic} internals",
+                f"{topic} architecture",
                 f"{topic} как устроен",
             )
         )
@@ -374,13 +375,18 @@ def hit_score(title: str, url: str, assignment: str) -> int:
         score += 10
         if parsed.intent == "structure":
             score += 4
+        if "internal" in parsed.raw.casefold() and "internal" not in blob:
+            score -= 8
     if host.startswith("docs.") or "/docs/" in path or "readthedocs" in host:
         score += 4
+    if "/blog/" in path or host.startswith("blog.") or "/blog." in host:
+        if parsed.intent == "structure":
+            score -= 8
     for token in _tokens(parsed.topic):
         if len(token) > 3 and token in host:
             score += 3
     if parsed.intent == "structure":
-        if any(mark in blob for mark in ("architecture", "internal", "устрой", "how-it-works")):
+        if any(mark in blob for mark in ("architecture", "internal", "устрой", "how-it-works", "plumbing")):
             score += 5
         if any(
             mark in blob
@@ -457,6 +463,11 @@ def relevant_facts(text: str, assignment: str, limit: int = 3) -> list[str]:
                 score += 3
             if any(mark in part.casefold() for mark in HISTORY_MARKS):
                 score -= 3
+            if any(
+                mark in part.casefold()
+                for mark in ("our article", "this article", "this post", "overview of")
+            ):
+                score -= 6
         if score <= 0:
             continue
         seen.add(key)
@@ -499,6 +510,13 @@ def _is_concept(phrase: str) -> bool:
         return False
     if low.startswith(("not ", "only ", "also ", "very ", "full ")):
         return False
+    if any(
+        token in {word.casefold() for word in words}
+        for token in ("command", "commands", "perfect", "tutorial", "article", "click")
+    ):
+        return False
+    if re.match(r"(?i)git\s+(clone|init|push|pull|commit|add|status)\b", low):
+        return False
     if len(words) >= 3 and sum(word[:1].isupper() for word in words) >= 3:
         return False
     letters = sum(ch.isalpha() for ch in phrase)
@@ -513,7 +531,8 @@ def _concepts_from(sentence: str, topic_stems: set[str] | None = None) -> list[s
         if not match:
             continue
         collected: list[str] = []
-        for word in _clean_concept(match.group(1)).split():
+        chunk = _clean_concept(match.group(1).split(",")[0])
+        for word in chunk.split():
             plain = word.strip(".,;:").casefold()
             if plain in {"/", "|", "blog", "conclusion", "workflow", "home", "menu"}:
                 break
@@ -586,7 +605,7 @@ def next_topics(assignment: str, page: str, limit: int = 2) -> list[tuple[str, s
         about = any(_has_stem(sentence, stem) for stem in stems)
         if not about or not _has_link_verb(sentence):
             continue
-        why = f"В устройстве «{parsed.topic}» это связано так: {sentence[:160]}"
+        why = f"В устройстве «{parsed.topic}» это связано так: {_tidy_fact(sentence, parsed.topic)[:160]}"
         for concept in _concepts_from(sentence, stems):
             craft = _canonicalize(concept)
             if craft.casefold() in GENERIC_CRAFTS and not _strong_craft_link(sentence):

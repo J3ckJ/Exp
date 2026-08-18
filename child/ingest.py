@@ -136,6 +136,12 @@ def is_weak_note(line: str, *, web: bool = False) -> bool:
         return True
     if web and sum(ch.isalpha() for ch in line) < 12:
         return True
+    if web and re.search(
+        r"ai-powered|our article|this article|this post|subscribe|business software|"
+        r"foundational principles|scaffolds modern",
+        low,
+    ):
+        return True
     if web and line.endswith("?") and re.match(
         r"(?i)(what|how|where|who|why|когда|что |как )", line
     ):

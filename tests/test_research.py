@@ -65,6 +65,20 @@ class ResearchTests(unittest.TestCase):
         self.assertTrue("tree" in topics or "architecture" in topics)
         self.assertNotIn("blog", topics)
         self.assertNotIn("programming languages", topics)
+        self.assertNotIn("clone", topics)
+
+    def test_git_does_not_follow_a_clone_command(self) -> None:
+        page = (
+            "Git uses a three-tree architecture. "
+            "Creating a repo uses git clone command, perfect for new directories."
+        )
+        with patch("child.think.load_brain_lines", return_value=[]):
+            follow = next_topics("как устроен Git", page)
+        topics = " ".join(topic for topic, _why in follow).casefold()
+        self.assertIn("tree", topics)
+        self.assertNotIn("clone", topics)
+        self.assertNotIn("perfect", topics)
+        self.assertNotIn("command", topics)
 
     def test_git_is_not_github(self) -> None:
         page = (
@@ -126,6 +140,12 @@ class ResearchTests(unittest.TestCase):
             "как устроен Git",
         )
         self.assertGreater(git, buildings)
+        blog = hit_score(
+            "What Are Git Concepts and Architecture?",
+            "https://www.designveloper.com/blog/git-concepts-architecture/",
+            "как устроен Git",
+        )
+        self.assertGreater(git, blog)
         from child.think import search_queries
 
         queries = " ".join(search_queries("как устроен Docker")).casefold()
@@ -138,6 +158,13 @@ class ResearchTests(unittest.TestCase):
         from child.web import topic_from_query
 
         self.assertTrue(is_weak_note("What Are Git Concepts and Architecture?", web=True))
+        self.assertTrue(is_weak_note("AI-Powered Business Software", web=True))
+        self.assertTrue(
+            is_weak_note(
+                "Our article offers a concise yet comprehensive overview of Git concepts.",
+                web=True,
+            )
+        )
         self.assertTrue(
             is_weak_note(
                 "The Key Components of Git Git Object Types How Git Tracks Content "

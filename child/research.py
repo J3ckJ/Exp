@@ -189,7 +189,7 @@ def _read_topic(
     for url in extra_urls:
         if host_allowed(url):
             tries.append((url, url))
-    for hunt in search_queries(query)[:2]:
+    for hunt in search_queries(query)[:3]:
         tries.extend(hunt_urls(hunt, limit=5))
     parsed = parse_assignment(query)
     title = ""
