@@ -46,6 +46,10 @@ _PY_TALK: tuple[tuple[str, str], ...] = (
     ("Что такое Python?", "Python is a language."),
     ("Как написать привет?", 'print("hello")'),
     ("Что делает print?", "print writes text."),
+    ("What is GitHub?", "GitHub is where code lives."),
+    ("Что такое GitHub?", "GitHub is where code lives."),
+    ("Run print hello", 'print("hello")'),
+    ("Выполни print", 'print("hello")'),
 )
 
 

@@ -77,6 +77,8 @@ def main() -> None:
                 f"layers={target.n_layer}  width={target.n_embd}"
             )
             print("Weights start fresh. Memory lives in lessons and notes/BRAIN.md.")
+            if args.age == "schoolkid":
+                print("schoolkid is the next body. The preschooler songs must be taught again.")
             model = Child(target).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
     n_params = model.count_parameters()

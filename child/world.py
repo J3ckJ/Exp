@@ -29,6 +29,9 @@ _WORLD_FACTS = (
     "Я умею считать.",
     "Я умею запоминать.",
     "Я умею смотреть в тетради.",
+    "Я умею запускать Python.",
+    "Я умею читать тетрадь.",
+    "GitHub is where code lives.",
     "London is the capital of England.",
     "Moscow is the capital of Russia.",
     "The Earth is a planet.",
@@ -67,6 +70,9 @@ _WORLD_TALK: tuple[tuple[str, str], ...] = (
     ("Узнай", "Сейчас посмотрю."),
     ("Что ты знаешь?", "Сейчас посмотрю в тетради."),
     ("Посчитай", "Сейчас посчитаю."),
+    ("Выполни print", "Сейчас запущу."),
+    ("Прочитай тетрадь", "Сейчас открою."),
+    ("Что такое GitHub?", "GitHub is where code lives."),
 )
 
 

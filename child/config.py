@@ -31,9 +31,23 @@ def preschooler_config() -> ChildConfig:
     )
 
 
+def schoolkid_config() -> ChildConfig:
+    """Next body, not born yet. Longer mouth, still a child not an adult."""
+    return ChildConfig(
+        vocab_size=256,
+        block_size=256,
+        n_layer=8,
+        n_head=8,
+        n_embd=256,
+        dropout=0.1,
+        bias=True,
+    )
+
+
 AGES: dict[str, ChildConfig] = {
     "toddler": toddler_config(),
     "preschooler": preschooler_config(),
+    "schoolkid": schoolkid_config(),
 }
 
 

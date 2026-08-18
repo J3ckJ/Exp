@@ -105,6 +105,8 @@ Water is an inorganic compound with the formula H2O.
 Я умею считать.
 Я умею запоминать.
 Я говорю, помню, смотрю и считаю.
+Я умею запускать Python.
+GitHub is where code lives.
 Москва — столица России, город федерального значения.
 Земля — третья планета от Солнца.
 The Sun is the star at the centre of the Solar System.

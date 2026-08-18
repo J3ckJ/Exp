@@ -1,16 +1,19 @@
 import unittest
 
 from child.curriculum import load_stage
-from child.web import TOPIC_PAGES, encode_url, host_allowed
+from child.web import TOPIC_PAGES, encode_url, host_allowed, urls_in_text
 from child.wish import is_learn_command, parse_wish
 
 
 class NightTests(unittest.TestCase):
     def test_wish_detects_python_and_web(self) -> None:
         wish = parse_wish("Поучи пока python на гитхабе и в интернете")
-        self.assertEqual(wish.topic, "python")
+        self.assertEqual(wish.topic, "github")
         self.assertTrue(wish.use_web)
         self.assertTrue(is_learn_command(wish.raw))
+        wiki = parse_wish("поучи python в интернете")
+        self.assertEqual(wiki.topic, "python")
+        self.assertTrue(wiki.use_web)
 
     def test_wish_detects_english(self) -> None:
         wish = parse_wish("learn english please")
@@ -25,6 +28,13 @@ class NightTests(unittest.TestCase):
         self.assertTrue(host_allowed("https://docs.python.org/3/tutorial/introduction.html"))
         self.assertTrue(host_allowed("https://en.wikipedia.org/api/rest_v1/page/summary/Hello"))
         self.assertTrue(all("wikipedia.org" in url for url in TOPIC_PAGES["python"]))
+        self.assertTrue(
+            any("raw.githubusercontent.com" in url for url in TOPIC_PAGES["github"])
+        )
+        self.assertEqual(
+            urls_in_text("eat https://raw.githubusercontent.com/python/cpython/3.12/Lib/this.py now"),
+            ["https://raw.githubusercontent.com/python/cpython/3.12/Lib/this.py"],
+        )
         self.assertFalse(host_allowed("https://evil.example/steal"))
 
     def test_cyrillic_wiki_url_is_encoded(self) -> None:

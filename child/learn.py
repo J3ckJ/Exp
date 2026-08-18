@@ -17,6 +17,7 @@ from child.lesson import (
     save_checkpoint,
     teach_text,
 )
+from child.web import urls_in_text
 from child.wish import parse_wish
 
 BRAIN_PATH = Path("notes/BRAIN.md")
@@ -29,6 +30,7 @@ STAGE_FOR_TOPIC = {
     "english": "english_school",
     "python": "python_school",
     "world": "world_school",
+    "github": "python_school",
     "general": "russian_power",
 }
 
@@ -148,6 +150,7 @@ def run_night(
     torch.manual_seed(seed)
     device = torch.device("cpu")
     parsed = parse_wish(wish)
+    extra_urls = list(urls) + urls_in_text(wish)
     resume_path = Path(resume) if resume else None
     if resume_path is not None and not resume_path.exists():
         yasli = Path("checkpoints/child_russian_yasli.pt")
@@ -163,7 +166,7 @@ def run_night(
     source_paths = gather_all(
         parsed,
         [Path(item) for item in sources],
-        urls,
+        extra_urls,
         use_web=use_web,
     )
     files = iter_text_files(source_paths)

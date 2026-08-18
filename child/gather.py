@@ -21,6 +21,10 @@ def gather_all(
     paths = [Path(item) for item in extra]
     if INBOX.exists():
         paths.append(INBOX)
+    if parsed.topic == "github":
+        hello = READERS / "hello_github.py"
+        if hello.exists():
+            paths.append(hello)
     if use_web or parsed.use_web:
         paths.extend(fetch_wish_texts(parsed.topic, extra_urls))
     return paths

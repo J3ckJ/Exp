@@ -2,6 +2,14 @@ from __future__ import annotations
 
 import re
 
+from child.hands import (
+    HANDS_HELP,
+    extract_code,
+    read_notebook,
+    safe_python,
+    wants_hands_help,
+    wants_notebook,
+)
 from child.learn import run_night
 from child.lesson import checkpoint_status
 from child.memory import know, remember, retrieve
@@ -69,6 +77,10 @@ def route_tools(user: str) -> str | None:
     low = user.casefold().strip()
     if any(marker in low for marker in TIME_MARKERS) or low in {"время", "time"}:
         return f"В Москве сейчас {moscow_now()}."
+    if wants_hands_help(user):
+        return HANDS_HELP
+    if wants_notebook(user):
+        return read_notebook()
     if any(marker in low for marker in STATUS_MARKERS):
         return checkpoint_status()
     if any(marker in low for marker in DATE_MARKERS) or low in {"дата", "date"}:
@@ -81,6 +93,9 @@ def route_tools(user: str) -> str | None:
         value = safe_calc(expr)
         if value:
             return value
+    code = extract_code(user)
+    if code:
+        return safe_python(code)
     if any(marker in low for marker in KNOW_MARKERS):
         query = _after_marker(user, KNOW_MARKERS) or user
         return know(query)
@@ -135,5 +150,7 @@ def jarvis_pairs() -> list[tuple[str, str]]:
         ("Узнай в интернете", "Сейчас посмотрю."),
         ("Что ты знаешь?", "Сейчас посмотрю в тетради."),
         ("Посчитай", "Сейчас посчитаю."),
+        ("Выполни print", "Сейчас запущу."),
+        ("Прочитай тетрадь", "Сейчас открою."),
         ("Что ты умеешь?", "Я говорю, помню, смотрю и считаю."),
     ]

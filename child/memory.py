@@ -7,15 +7,23 @@ BRAIN_PATH = Path("notes/BRAIN.md")
 
 
 def load_brain_lines() -> list[str]:
+    return [line for _section, line in load_brain_entries()]
+
+
+def load_brain_entries() -> list[tuple[str, str]]:
     if not BRAIN_PATH.exists():
         return []
-    lines: list[str] = []
+    entries: list[tuple[str, str]] = []
+    section = "прочее"
     for raw in BRAIN_PATH.read_text(encoding="utf-8").splitlines():
         line = raw.strip()
-        if not line or line.startswith("#"):
+        if not line:
             continue
-        lines.append(line)
-    return lines
+        if line.startswith("#"):
+            section = line.lstrip("#").strip().casefold()
+            continue
+        entries.append((section, line))
+    return entries
 
 
 def remember(fact: str) -> str:
@@ -49,13 +57,16 @@ def retrieve(query: str, limit: int = 3) -> list[str]:
     q = _tokens(query)
     if not q:
         return []
-    scored: list[tuple[int, str]] = []
-    for line in load_brain_lines():
+    scored: list[tuple[int, int, str]] = []
+    fact_sections = {"запомнил", "мир", "python"}
+    for section, line in load_brain_entries():
         overlap = len(q & _tokens(line))
-        if overlap:
-            scored.append((overlap, line))
-    scored.sort(key=lambda item: (-item[0], len(item[1])))
-    return [line for _score, line in scored[:limit]]
+        if not overlap:
+            continue
+        bonus = 1 if section in fact_sections else 0
+        scored.append((overlap + bonus, len(line), line))
+    scored.sort(key=lambda item: (-item[0], item[1]))
+    return [line for _score, _length, line in scored[:limit]]
 
 
 def know(query: str, limit: int = 3) -> str:

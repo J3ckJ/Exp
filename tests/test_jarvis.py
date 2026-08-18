@@ -3,8 +3,11 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from child.agent import route_tools
+from child.config import preschooler_config, schoolkid_config
 from child.curriculum import load_stage
+from child.hands import extract_code, safe_python
 from child.memory import retrieve
+from child.model import Child
 from child.morning import MORNING_PROMPTS
 from child.night import fit_steps, minutes_left, still_night
 from child.tools import first_fact, moscow_date, moscow_now, safe_calc
@@ -73,7 +76,34 @@ class JarvisTests(unittest.TestCase):
         self.assertIn("Москва", fact)
         self.assertIn("столица", fact.casefold())
 
-    def test_world_wish(self) -> None:
+    def test_python_run_hand(self) -> None:
+        self.assertEqual(route_tools('выполни print("hello")'), "hello")
+        self.assertEqual(safe_python("print(1+2)"), "3")
+        self.assertIn("маленький", safe_python("import os"))
+        self.assertEqual(extract_code("What is print?"), "")
+        self.assertIsNone(route_tools("What is print?"))
+
+    def test_notebook_and_hands_help(self) -> None:
+        text = route_tools("прочитай тетрадь")
+        self.assertIsNotNone(text)
+        assert text is not None
+        self.assertGreater(len(text), 10)
+        help_text = route_tools("что умеют руки")
+        self.assertIsNotNone(help_text)
+        assert help_text is not None
+        self.assertIn("Python", help_text)
+
+    def test_github_wish(self) -> None:
+        wish = parse_wish("поучи python на гитхабе")
+        self.assertEqual(wish.topic, "github")
+        self.assertTrue(wish.use_web)
+
+    def test_schoolkid_is_drawn_not_born(self) -> None:
+        kid = schoolkid_config()
+        pre = preschooler_config()
+        self.assertGreater(kid.block_size, pre.block_size)
+        self.assertGreater(kid.n_layer, pre.n_layer)
+        self.assertGreater(Child(kid).count_parameters(), Child(pre).count_parameters())
         wish = parse_wish("поучи мир в интернете")
         self.assertEqual(wish.topic, "world")
         self.assertTrue(wish.use_web)

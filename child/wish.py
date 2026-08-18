@@ -48,7 +48,9 @@ def parse_wish(text: str) -> Wish:
     low = text.casefold()
     use_web = any(marker in low for marker in WEB_MARKERS)
     topic = "general"
-    if any(word in low for word in ("python", "питон", "код", "программ", "print(")):
+    if any(word in low for word in ("github", "гитхаб")):
+        topic = "github"
+    elif any(word in low for word in ("python", "питон", "код", "программ", "print(")):
         topic = "python"
     elif any(word in low for word in ("english", "английск", "hello")):
         topic = "english"
@@ -75,6 +77,8 @@ def _query_from(text: str, topic: str) -> str:
         return "Русский язык"
     if topic == "world":
         return "Earth Moscow Sun"
+    if topic == "github":
+        return "Python on GitHub"
     return "learning"
 
 

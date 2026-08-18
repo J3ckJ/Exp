@@ -42,6 +42,9 @@ TOPIC_PAGES: dict[str, tuple[str, ...]] = {
         "https://simple.wikipedia.org/api/rest_v1/page/summary/Sun",
         "https://simple.wikipedia.org/api/rest_v1/page/summary/Water",
     ),
+    "github": (
+        "https://raw.githubusercontent.com/python/peps/main/peps/pep-0020.rst",
+    ),
     "general": (
         "https://simple.wikipedia.org/api/rest_v1/page/summary/Learning",
     ),
@@ -88,6 +91,11 @@ def fetch_url(url: str) -> str:
     if "<html" in text[:1000].casefold() or "</p>" in text.casefold():
         return strip_html(text)
     return text
+
+
+def urls_in_text(text: str) -> list[str]:
+    found = re.findall(r"https://raw\.githubusercontent\.com/[^\s)>\"]+", text)
+    return [url for url in found if host_allowed(url)]
 
 
 def urls_for_wish(topic: str, extra_urls: Sequence[str]) -> list[str]:
