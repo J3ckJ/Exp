@@ -7,7 +7,7 @@ from typing import Optional
 import torch
 
 from child.bytes_io import bytes_to_text, text_to_bytes
-from child.config import ChildConfig
+from child.config import ChildConfig, age_name
 from child.curriculum import load_stage
 from child.model import Child
 
@@ -122,6 +122,11 @@ def checkpoint_status(path: Path = DEFAULT_CHECKPOINT) -> str:
     payload = torch.load(path, map_location="cpu", weights_only=False)
     steps = int(payload.get("total_steps") or payload.get("steps") or 0)
     stage = str(payload.get("stage") or "не знаю")
+    saved = payload.get("config")
+    if saved is not None:
+        age = age_name(saved)
+        n_params = Child(saved).count_parameters()
+        return f"Я {age}, {n_params:,} ручек. {steps} шагов. Последний урок: {stage}."
     return f"Я учился {steps} шагов. Последний урок: {stage}."
 
 

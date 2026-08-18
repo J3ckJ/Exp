@@ -35,7 +35,7 @@
 1. Русский, английский, Python как байты — **уже умеет**, пока не срывается.
 2. Джарвис-руки на том же теле: время, тетрадь, вики, счёт, **простой Python**, GitHub.
 3. Самоучка таскает короткие тексты (Википедия, raw GitHub), потом повторяет песни.
-4. Подросток `schoolkid` нарисован в `config.py`, **ещё не родился**. Параметры наращиваем, когда руки и тетрадь держатся несколько дней.
+4. Подросток `schoolkid` (~6.4 млн) самоучка может **сам себе взять**, если урок слишком твёрдый (loss высокий) или если сказать «вырасти». Это не ChatGPT: новое тело случайное, песни снова из тетради. Старое тело остаётся в `checkpoints/child_preschooler.pt`.
 
 Возраст `preschooler`: рот 192 байта, 6 слоёв, ширина 192, около 2.8 млн параметров. Всё ещё ребёнок. Не ChatGPT.
 
@@ -76,6 +76,9 @@ python3 -m child.chat --say "запомни Хозяина зовут Евген
 python3 -m child.chat --say "выполни print(\"hello\")"
 python3 -m child.chat --say "прочитай тетрадь"
 python3 -m child.chat --say "поучи github"
+python3 -m child.chat --say "вырасти"
+python3 -m child.grow
+python3 -m child.learn --wish "поучи python в интернете" --web --allow-grow
 python3 -m child.night
 python3 -m child.morning
 ```

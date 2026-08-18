@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 
+from child.grow import run_self_grow, wants_grow
 from child.hands import (
     HANDS_HELP,
     extract_code,
@@ -119,6 +120,10 @@ def speak_prompt(user: str, history: list[tuple[str, str]], block_size: int) -> 
 
 
 def study_command(user: str, learn_steps: int, checkpoint: str) -> str | None:
+    if wants_grow(user) and not is_learn_command(user):
+        print("Хорошо. Сам расту: новое тело, песни из тетради.")
+        run_self_grow(checkpoint, force=True)
+        return "Я вырос. Песни из тетради. Спроси меня."
     if not is_learn_command(user):
         return None
     parsed = parse_wish(user)
@@ -137,6 +142,8 @@ def study_command(user: str, learn_steps: int, checkpoint: str) -> str | None:
         sample_every=0,
         keep_inbox=True,
         skip_exam=True,
+        allow_grow=True,
+        force_grow=wants_grow(user),
     )
     return "Я поучился. Спроси меня."
 
@@ -152,5 +159,6 @@ def jarvis_pairs() -> list[tuple[str, str]]:
         ("Посчитай", "Сейчас посчитаю."),
         ("Выполни print", "Сейчас запущу."),
         ("Прочитай тетрадь", "Сейчас открою."),
+        ("Вырасти", "Сейчас возьму больше ручек."),
         ("Что ты умеешь?", "Я говорю, помню, смотрю и считаю."),
     ]

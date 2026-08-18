@@ -9,6 +9,7 @@ import torch
 
 from child.curriculum import load_stage
 from child.gather import archive_inbox, gather_all
+from child.grow import run_self_grow, wants_grow
 from child.ingest import iter_text_files, join_lines, mix_study, read_utf8, split_practice_lines
 from child.lesson import (
     DEFAULT_CHECKPOINT,
@@ -18,7 +19,7 @@ from child.lesson import (
     teach_text,
 )
 from child.web import urls_in_text
-from child.wish import parse_wish
+from child.wish import Wish, parse_wish
 
 BRAIN_PATH = Path("notes/BRAIN.md")
 TETRAD_PATH = Path("notes/TETRAD.md")
@@ -52,6 +53,17 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--sample-every", type=int, default=400)
     parser.add_argument("--keep-inbox", action="store_true")
     parser.add_argument("--skip-exam", action="store_true")
+    parser.add_argument(
+        "--allow-grow",
+        action="store_true",
+        help="If the new page is too hard, grow a bigger random mouth and re-sing.",
+    )
+    parser.add_argument(
+        "--force-grow",
+        action="store_true",
+        help="Grow after this lesson even if the mouth coped.",
+    )
+    parser.add_argument("--grow-steps", type=int, default=2500)
     return parser.parse_args()
 
 
@@ -144,6 +156,9 @@ def run_night(
     sample_every: int,
     keep_inbox: bool,
     skip_exam: bool,
+    allow_grow: bool = False,
+    force_grow: bool = False,
+    grow_steps: int = 2500,
 ) -> float:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(line_buffering=True)
@@ -212,6 +227,15 @@ def run_night(
         steps=steps,
         total_steps=total_steps,
     )
+    if allow_grow or force_grow or wants_grow(wish):
+        run_self_grow(
+            out,
+            force=force_grow or wants_grow(wish),
+            last_loss=loss,
+            new_bytes=len(new_text.encode("utf-8")),
+            allow=allow_grow or wants_grow(wish),
+            recite_steps=grow_steps,
+        )
     if not keep_inbox:
         archive_inbox()
     print(f"Wrote {BRAIN_PATH} and {TETRAD_PATH}")
@@ -235,6 +259,9 @@ def main() -> None:
         sample_every=args.sample_every,
         keep_inbox=args.keep_inbox,
         skip_exam=args.skip_exam,
+        allow_grow=args.allow_grow,
+        force_grow=args.force_grow,
+        grow_steps=args.grow_steps,
     )
 
 

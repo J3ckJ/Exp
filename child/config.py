@@ -32,7 +32,7 @@ def preschooler_config() -> ChildConfig:
 
 
 def schoolkid_config() -> ChildConfig:
-    """Next body, not born yet. Longer mouth, still a child not an adult."""
+    """Next body on the self-grow ladder. A bigger random mouth, not downloaded knowledge."""
     return ChildConfig(
         vocab_size=256,
         block_size=256,
@@ -50,6 +50,8 @@ AGES: dict[str, ChildConfig] = {
     "schoolkid": schoolkid_config(),
 }
 
+LADDER: tuple[str, ...] = ("toddler", "preschooler", "schoolkid")
+
 
 def configs_match(left: ChildConfig, right: ChildConfig) -> bool:
     return (
@@ -59,3 +61,19 @@ def configs_match(left: ChildConfig, right: ChildConfig) -> bool:
         and left.n_head == right.n_head
         and left.n_embd == right.n_embd
     )
+
+
+def age_name(config: ChildConfig) -> str:
+    for name, template in AGES.items():
+        if configs_match(config, template):
+            return name
+    return "unknown"
+
+
+def next_age(name: str) -> str | None:
+    if name not in LADDER:
+        return None
+    index = LADDER.index(name)
+    if index + 1 >= len(LADDER):
+        return None
+    return LADDER[index + 1]
