@@ -243,6 +243,9 @@ def _read_topic(
             print(f"skip skin page {url}")
             continue
         score = page_score(text, assignment, url, query=query)
+        if score < 0:
+            print(f"skip unrelated {url}")
+            continue
         if best is None or score > best[0]:
             best = (score, _page_label(label, url), text, url)
         parsed_assign = parse_assignment(assignment)

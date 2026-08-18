@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from urllib.parse import unquote
+from urllib.parse import parse_qs, unquote, urlparse
 
 from child.ingest import clean_web_text, is_code_junk, is_weak_note, is_web_junk
 from child.memory import load_brain_lines
@@ -150,6 +150,9 @@ GENERIC_CONCEPTS = {
     "query",
     "octets",
     "storage",
+    "cryptography",
+    "cryptology",
+    "расширение",
 }
 
 # Encyclopedia articles named after a generic word, not the product.
@@ -249,6 +252,13 @@ DEEP_MARKS = (
     "virtualization",
     "resolver",
     "hierarchical",
+    "handshake",
+    "asymmetric",
+    "symmetric",
+    "шифр",
+    "сертификат",
+    "pki",
+    "public key",
     "запрос",
     "заголов",
 )
@@ -361,6 +371,13 @@ def already_knows(topic: str) -> bool:
     return False
 
 
+TITLE_ALIASES = {
+    "tls": ("transport layer security", "ssl"),
+    "ssl": ("transport layer security", "tls"),
+    "http": ("hypertext transfer protocol",),
+    "dns": ("domain name system",),
+}
+
 GENERIC_HUNT = {
     "internal",
     "internals",
@@ -409,7 +426,14 @@ def wiki_title_fits(title: str, assignment: str, query: str = "") -> bool:
     )
     if not product:
         return True
-    return bool(product & _product_tokens(title))
+    if product & _product_tokens(title):
+        return True
+    blob = f"{low} {topic} {query.casefold()}"
+    for key, aliases in TITLE_ALIASES.items():
+        if key in product or key == topic:
+            if any(alias in low for alias in aliases) or key in low:
+                return True
+    return False
 
 
 def _tidy_fact(part: str, topic: str) -> str:
@@ -425,6 +449,11 @@ def _tidy_fact(part: str, topic: str) -> str:
 
 
 def _wiki_slug(url: str) -> str:
+    parsed = urlparse(url) if "://" in url else None
+    if parsed and parsed.query:
+        titles = parse_qs(parsed.query).get("titles") or []
+        if titles and titles[0]:
+            return unquote(titles[0]).replace("_", " ").strip()
     match = re.search(r"(?:/wiki/|/page/summary/)([^/?#]+)", url)
     if not match:
         return ""

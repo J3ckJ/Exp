@@ -99,6 +99,10 @@ TOPIC_PAGES: dict[str, tuple[str, ...]] = {
         "https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Messages",
         "https://en.wikipedia.org/api/rest_v1/page/summary/HTTP",
     ),
+    "tls": (
+        "https://en.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&redirects=1&format=json&titles=Transport_Layer_Security",
+        "https://en.wikipedia.org/api/rest_v1/page/summary/Transport_Layer_Security",
+    ),
     "dns": (
         "https://en.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&redirects=1&format=json&titles=Domain_Name_System",
         "https://en.wikipedia.org/api/rest_v1/page/summary/Domain_Name_System",
@@ -135,6 +139,7 @@ TOPIC_SEARCH = {
     "docker": "Docker",
     "git": "Git",
     "http": "HTTP",
+    "tls": "Transport Layer Security",
     "dns": "Domain Name System",
     "python": "Python",
     "english": "English language",
@@ -513,6 +518,8 @@ def topic_from_query(query: str) -> str:
         return "github"
     if any(word in low for word in ("php", "пхп")):
         return "php"
+    if re.search(r"(?<![a-zа-яё])tls(?![a-zа-яё])|transport layer security", low):
+        return "tls"
     if re.search(r"(?<![a-zа-яё])https?(?![a-zа-яё])", low):
         return "http"
     if re.search(r"(?<![a-zа-яё])dns(?![a-zа-яё])|domain name", low):

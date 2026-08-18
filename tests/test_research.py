@@ -148,8 +148,9 @@ class ResearchTests(unittest.TestCase):
         )
         self.assertFalse(wiki_title_fits("Internal structure of Earth", "как устроен HTTP"))
         self.assertFalse(wiki_title_fits("HNTB Architecture", "как устроен HTTP"))
-        self.assertFalse(wiki_title_fits("PostgreSQL", "как устроен Git"))
-        self.assertTrue(wiki_title_fits("HTTP", "как устроен HTTP"))
+        self.assertFalse(wiki_title_fits("Расширение", "как устроен TLS"))
+        self.assertFalse(wiki_title_fits("Cryptography", "как устроен TLS"))
+        self.assertTrue(wiki_title_fits("Transport Layer Security", "как устроен TLS", "TLS"))
         git = hit_score(
             "Git",
             "https://en.wikipedia.org/api/rest_v1/page/summary/Git",
