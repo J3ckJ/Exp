@@ -24,9 +24,11 @@ class NightTests(unittest.TestCase):
         self.assertFalse(is_learn_command("Привет"))
         self.assertFalse(is_learn_command("How are you?"))
 
-    def test_web_whitelist(self) -> None:
+    def test_web_public_hosts(self) -> None:
         self.assertTrue(host_allowed("https://docs.python.org/3/tutorial/introduction.html"))
         self.assertTrue(host_allowed("https://en.wikipedia.org/api/rest_v1/page/summary/Hello"))
+        self.assertTrue(host_allowed("https://dev.1c-bitrix.ru/learning/"))
+        self.assertTrue(host_allowed("https://example.com/page"))
         self.assertTrue(all("wikipedia.org" in url for url in TOPIC_PAGES["python"]))
         self.assertTrue(
             any("raw.githubusercontent.com" in url for url in TOPIC_PAGES["github"])
@@ -35,7 +37,11 @@ class NightTests(unittest.TestCase):
             urls_in_text("eat https://raw.githubusercontent.com/python/cpython/3.12/Lib/this.py now"),
             ["https://raw.githubusercontent.com/python/cpython/3.12/Lib/this.py"],
         )
-        self.assertFalse(host_allowed("https://evil.example/steal"))
+        self.assertFalse(host_allowed("https://localhost/secret"))
+        self.assertFalse(host_allowed("http://127.0.0.1/"))
+        self.assertFalse(host_allowed("http://192.168.0.5/admin"))
+        self.assertFalse(host_allowed("http://169.254.169.254/latest"))
+        self.assertFalse(host_allowed("file:///etc/passwd"))
 
     def test_cyrillic_wiki_url_is_encoded(self) -> None:
         raw = "https://ru.wikipedia.org/api/rest_v1/page/summary/Земля"

@@ -7,11 +7,19 @@ from pathlib import Path
 
 from urllib.parse import unquote, urlparse
 
-from child.ingest import split_practice_lines
+from child.ingest import is_web_junk, split_practice_lines
 from child.memory import remember
 from child.think import already_knows, next_topics
 from child.tools import first_fact, wiki_url
-from child.web import fetch_url, host_allowed, topic_from_query, urls_for_wish, urls_in_text, wiki_search
+from child.web import (
+    fetch_url,
+    host_allowed,
+    hunt_urls,
+    topic_from_query,
+    urls_for_wish,
+    urls_in_text,
+    wiki_search,
+)
 
 PLAN_PATH = Path("notes/PLAN.md")
 MAX_PAGES = 4
@@ -111,10 +119,12 @@ def _distill(text: str, query: str) -> list[str]:
     if _looks_like_json(text):
         return []
     fact = first_fact(text, query)
+    if fact and is_web_junk(fact):
+        fact = ""
     lines = [fact] if fact else []
     fact_low = fact.casefold()
     for line in split_practice_lines(text):
-        if line in lines or line.casefold() in fact_low:
+        if is_web_junk(line) or line in lines or line.casefold() in fact_low:
             continue
         lines.append(line)
         if len(lines) >= MAX_NOTES:
@@ -141,23 +151,26 @@ def _page_label(label: str, url: str) -> str:
 
 
 def _read_topic(query: str, extra_urls: list[str], prefer_ru: bool = False) -> tuple[str, str, str]:
-    """Return title, extract, source."""
+    """Return title, extract, source. Hunt the public web, then Wikipedia."""
     tries: list[tuple[str, str]] = []
     for url in extra_urls:
         if host_allowed(url):
             tries.append((url, url))
-    title = wiki_search(query)
-    if prefer_ru or re.search(r"[А-Яа-яЁё]", query + title):
+    tries.extend(hunt_urls(query, limit=5))
+    title = ""
+    if prefer_ru or re.search(r"[А-Яа-яЁё]", query):
         langs = ("ru", "en", "simple")
     else:
         langs = ("en", "simple", "ru")
-    if title:
-        for lang in langs:
-            tries.append((title, wiki_url(title, lang)))
     topic = topic_from_query(query)
     if topic:
         for url in urls_for_wish(topic, ()):
             tries.append((topic, url))
+    wiki_title = wiki_search(query)
+    if wiki_title:
+        title = wiki_title
+        for lang in langs:
+            tries.append((wiki_title, wiki_url(wiki_title, lang)))
 
     seen_urls: set[str] = set()
     for label, url in tries:
@@ -169,7 +182,7 @@ def _read_topic(query: str, extra_urls: list[str], prefer_ru: bool = False) -> t
         except Exception as exc:
             print(f"skip {url}: {exc}")
             continue
-        if not text or len(text) < 40 or _looks_like_json(text):
+        if not text or len(text) < 40 or _looks_like_json(text) or is_web_junk(text[:240]):
             continue
         return _page_label(label, url), text, url
     return title, "", ""

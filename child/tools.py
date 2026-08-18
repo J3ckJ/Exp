@@ -7,8 +7,9 @@ from datetime import datetime
 from urllib.parse import quote
 from zoneinfo import ZoneInfo
 
+from child.ingest import is_web_junk
 from child.memory import remember
-from child.web import fetch_url, host_allowed
+from child.web import fetch_url, host_allowed, hunt_urls
 
 _OPS = {
     ast.Add: operator.add,
@@ -110,22 +111,24 @@ def lookup(query: str) -> str:
     title = " ".join(query.split())
     if not title:
         return "Что искать?"
-    texts: list[str] = []
+    tries: list[str] = []
     langs = ("ru", "en", "simple") if re.search(r"[А-Яа-яЁё]", title) else ("en", "simple", "ru")
     for lang in langs:
         url = wiki_url(title, lang)
-        if not host_allowed(url):
-            continue
+        if host_allowed(url):
+            tries.append(url)
+    for _label, url in hunt_urls(title, limit=4):
+        if url not in tries:
+            tries.append(url)
+    for url in tries:
         try:
             text = fetch_url(url)
         except Exception:
             continue
-        if text and len(text) > 40:
-            texts.append(text)
-            break
-    if not texts:
-        return "Не нашёл. Скажи иначе."
-    extract = texts[0].strip()
-    fact = first_fact(extract, title)
-    remember(fact)
-    return fact
+        if not text or len(text) < 40 or is_web_junk(text[:240]):
+            continue
+        fact = first_fact(text, title)
+        if fact and not is_web_junk(fact):
+            remember(fact)
+            return fact
+    return "Не нашёл. Скажи иначе."

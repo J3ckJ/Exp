@@ -1,26 +1,54 @@
 from __future__ import annotations
 
+import ipaddress
 import json
 import re
+import socket
 from html import unescape
 from pathlib import Path
 from typing import Any, Sequence
 from urllib.error import HTTPError, URLError
-from urllib.parse import quote, unquote, urlparse, urlsplit, urlunsplit
-from urllib.request import Request, urlopen
+from urllib.parse import parse_qs, quote, unquote, urlparse, urlsplit, urlunsplit
+from urllib.request import HTTPRedirectHandler, Request, build_opener
 
-ALLOWED_HOSTS = (
-    "ru.wikipedia.org",
-    "en.wikipedia.org",
-    "simple.wikipedia.org",
-    "docs.python.org",
-    "raw.githubusercontent.com",
+from child.ingest import split_practice_lines
+
+MAX_BYTES = 120_000
+WEB_DIR = Path("data/web")
+USER_AGENT = "ExpChild/0.2 (self-study; +https://github.com/J3ckJ/Exp)"
+SEARCH_UA = (
+    "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0"
 )
 
-MAX_BYTES = 80_000
-WEB_DIR = Path("data/web")
-USER_AGENT = "ExpChild/0.1 (self-study; educational)"
-
+BLOCKED_HOSTS = {
+    "localhost",
+    "localhost.localdomain",
+    "metadata",
+    "metadata.google.internal",
+    "metadata.google.com",
+}
+BLOCKED_SUFFIXES = (".local", ".internal", ".localhost", ".lan", ".home", ".corp")
+SKIP_RESULT_HOSTS = {
+    "duckduckgo.com",
+    "html.duckduckgo.com",
+    "lite.duckduckgo.com",
+    "google.com",
+    "www.google.com",
+    "bing.com",
+    "www.bing.com",
+    "yandex.ru",
+    "yandex.com",
+    "ya.ru",
+}
+DOCS_HINTS = {
+    "bitrix": (
+        "site:dev.1c-bitrix.ru",
+        "site:helpdesk.bitrix24.ru",
+        "site:academy.1c-bitrix.ru",
+    ),
+    "php": ("site:www.php.net",),
+    "python": ("site:docs.python.org",),
+}
 
 TOPIC_PAGES: dict[str, tuple[str, ...]] = {
     "python": (
@@ -58,61 +86,6 @@ TOPIC_PAGES: dict[str, tuple[str, ...]] = {
     ),
 }
 
-
-def host_allowed(url: str) -> bool:
-    host = (urlparse(url).hostname or "").lower()
-    return any(host == allowed or host.endswith("." + allowed) for allowed in ALLOWED_HOSTS)
-
-
-def encode_url(url: str) -> str:
-    parts = urlsplit(url)
-    path = quote(unquote(parts.path), safe="/")
-    query = quote(unquote(parts.query), safe="=&")
-    return urlunsplit((parts.scheme, parts.netloc, path, query, parts.fragment))
-
-
-def strip_html(raw: str) -> str:
-    raw = re.sub(r"(?is)<script[^>]*>.*?</script>", " ", raw)
-    raw = re.sub(r"(?is)<style[^>]*>.*?</style>", " ", raw)
-    raw = re.sub(r"(?s)<[^>]+>", " ", raw)
-    return unescape(raw)
-
-
-def fetch_url(url: str) -> str:
-    if not host_allowed(url):
-        raise ValueError(f"Host not allowed: {url}")
-    request = Request(encode_url(url), headers={"User-Agent": USER_AGENT})
-    with urlopen(request, timeout=20) as response:
-        data = response.read(MAX_BYTES + 1)
-        ctype = response.headers.get("Content-Type", "")
-    if len(data) > MAX_BYTES:
-        data = data[:MAX_BYTES]
-    text = data.decode("utf-8", errors="replace")
-    if "json" in ctype or "/page/summary/" in url:
-        try:
-            payload = json.loads(text)
-            if isinstance(payload, dict):
-                extract = payload.get("extract")
-                if isinstance(extract, str) and extract.strip():
-                    return extract
-            return text
-        except json.JSONDecodeError:
-            pass
-    if "<html" in text[:1000].casefold() or "</p>" in text.casefold():
-        return strip_html(text)
-    return text
-
-
-def urls_in_text(text: str) -> list[str]:
-    found = re.findall(r"https://[^\s)>\"]+", text)
-    cleaned: list[str] = []
-    for url in found:
-        url = url.rstrip(".,;]")
-        if host_allowed(url) and url not in cleaned:
-            cleaned.append(url)
-    return cleaned
-
-
 STOPWORDS = {
     "в",
     "во",
@@ -143,6 +116,209 @@ TOPIC_SEARCH = {
     "world": "Земля",
     "github": "GitHub",
 }
+
+
+def _hostname(url: str) -> str:
+    return (urlparse(url).hostname or "").lower().rstrip(".")
+
+
+def _ip_is_public(ip: ipaddress.IPv4Address | ipaddress.IPv6Address) -> bool:
+    return bool(ip.is_global) and not ip.is_multicast
+
+
+def host_allowed(url: str) -> bool:
+    """Public http(s) only. Not a whitelist: localhost and private nets stay closed."""
+    parsed = urlparse(url)
+    if parsed.scheme not in {"http", "https"}:
+        return False
+    if parsed.username or parsed.password:
+        return False
+    host = (parsed.hostname or "").lower().rstrip(".")
+    if not host or host in BLOCKED_HOSTS:
+        return False
+    if any(host == suf[1:] or host.endswith(suf) for suf in BLOCKED_SUFFIXES):
+        return False
+    try:
+        ip = ipaddress.ip_address(host)
+    except ValueError:
+        return True
+    return _ip_is_public(ip)
+
+
+def _resolved_public(url: str) -> bool:
+    if not host_allowed(url):
+        return False
+    host = _hostname(url)
+    try:
+        ipaddress.ip_address(host)
+        return True
+    except ValueError:
+        pass
+    try:
+        infos = socket.getaddrinfo(host, None, type=socket.SOCK_STREAM)
+    except socket.gaierror:
+        return False
+    if not infos:
+        return False
+    for info in infos:
+        try:
+            ip = ipaddress.ip_address(info[4][0])
+        except ValueError:
+            return False
+        if not _ip_is_public(ip):
+            return False
+    return True
+
+
+class _SafeRedirect(HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):  # type: ignore[no-untyped-def]
+        if not _resolved_public(newurl):
+            raise URLError(f"blocked redirect: {newurl}")
+        return HTTPRedirectHandler.redirect_request(
+            self, req, fp, code, msg, headers, newurl
+        )
+
+
+def encode_url(url: str) -> str:
+    parts = urlsplit(url)
+    path = quote(unquote(parts.path), safe="/")
+    query = quote(unquote(parts.query), safe="=&")
+    return urlunsplit((parts.scheme, parts.netloc, path, query, parts.fragment))
+
+
+def strip_html(raw: str) -> str:
+    raw = re.sub(r"(?is)<!--.*?-->", " ", raw)
+    raw = re.sub(
+        r"(?is)<(script|style|noscript|svg|nav|footer|header|form|iframe)[^>]*>.*?</\1>",
+        " ",
+        raw,
+    )
+    raw = re.sub(r"(?s)<[^>]+>", " ", raw)
+    return unescape(" ".join(raw.split()))
+
+
+def _fetch_raw(url: str, user_agent: str = USER_AGENT) -> tuple[str, str, str]:
+    """Return text, content-type, final url."""
+    if not _resolved_public(url):
+        raise ValueError(f"Host not allowed: {url}")
+    request = Request(encode_url(url), headers={"User-Agent": user_agent})
+    opener = build_opener(_SafeRedirect)
+    with opener.open(request, timeout=20) as response:
+        data = response.read(MAX_BYTES + 1)
+        ctype = response.headers.get("Content-Type", "")
+        final = response.geturl() or url
+    if not _resolved_public(final):
+        raise ValueError(f"Host not allowed: {final}")
+    if len(data) > MAX_BYTES:
+        data = data[:MAX_BYTES]
+    text = data.decode("utf-8", errors="replace")
+    return text, ctype, final
+
+
+def fetch_url(url: str) -> str:
+    text, ctype, final = _fetch_raw(url)
+    if "json" in ctype or "/page/summary/" in final:
+        try:
+            payload = json.loads(text)
+            if isinstance(payload, dict):
+                extract = payload.get("extract")
+                if isinstance(extract, str) and extract.strip():
+                    return extract
+            return text
+        except json.JSONDecodeError:
+            pass
+    if "<html" in text[:2000].casefold() or "</p>" in text.casefold():
+        return strip_html(text)
+    return text
+
+
+def urls_in_text(text: str) -> list[str]:
+    found = re.findall(r"https?://[^\s)>\"]+", text)
+    cleaned: list[str] = []
+    for url in found:
+        url = url.rstrip(".,;]")
+        if host_allowed(url) and url not in cleaned:
+            cleaned.append(url)
+    return cleaned
+
+
+def as_readable_url(url: str) -> str:
+    """Prefer Wikipedia JSON extract over the full skin."""
+    parsed = urlparse(url)
+    host = (parsed.hostname or "").lower()
+    match = re.match(r"^(ru|en|simple)\.wikipedia\.org$", host)
+    if match and "/wiki/" in parsed.path:
+        title = unquote(parsed.path.split("/wiki/", 1)[1])
+        title = title.split("#", 1)[0]
+        if title and not title.startswith(("Special:", "File:", "Служебная:")):
+            return f"https://{host}/api/rest_v1/page/summary/{quote(title)}"
+    return url
+
+
+def _result_host_ok(url: str) -> bool:
+    host = _hostname(url)
+    if not host or not host_allowed(url):
+        return False
+    if host in SKIP_RESULT_HOSTS or any(
+        host.endswith("." + skipped) for skipped in SKIP_RESULT_HOSTS
+    ):
+        return False
+    return True
+
+
+def _unwrap_result_url(url: str) -> str:
+    url = unescape(url.strip())
+    if url.startswith("//"):
+        url = "https:" + url
+    parsed = urlparse(url)
+    qs = parse_qs(parsed.query)
+    if "uddg" in qs and qs["uddg"]:
+        url = unquote(qs["uddg"][0])
+    return url
+
+
+def parse_search_html(html: str) -> list[tuple[str, str]]:
+    """Pull (title, url) out of a search-engine results page."""
+    found: list[tuple[str, str]] = []
+    seen: set[str] = set()
+    for match in re.finditer(
+        r'<a[^>]+href=["\']([^"\']+)["\'][^>]*>(.*?)</a>',
+        html,
+        flags=re.I | re.S,
+    ):
+        url = _unwrap_result_url(match.group(1))
+        title = " ".join(strip_html(match.group(2)).split())
+        if not _result_host_ok(url) or url in seen:
+            continue
+        seen.add(url)
+        found.append((title or url, url))
+    for encoded in re.findall(r"[?&]uddg=([^&\"']+)", html):
+        url = _unwrap_result_url("https://duckduckgo.com/l/?uddg=" + encoded)
+        if not _result_host_ok(url) or url in seen:
+            continue
+        seen.add(url)
+        found.append((url, url))
+    return found
+
+
+def web_search(query: str, limit: int = 5) -> list[tuple[str, str]]:
+    query = " ".join(query.split())
+    if not query:
+        return []
+    endpoints = (
+        f"https://html.duckduckgo.com/html/?q={quote(query)}",
+        f"https://lite.duckduckgo.com/lite/?q={quote(query)}",
+    )
+    for url in endpoints:
+        try:
+            html, _ctype, _final = _fetch_raw(url, user_agent=SEARCH_UA)
+        except (HTTPError, URLError, TimeoutError, ValueError, OSError) as exc:
+            print(f"skip search {url}: {exc}")
+            continue
+        hits = parse_search_html(html)
+        if hits:
+            return hits[:limit]
+    return []
 
 
 def query_variants(query: str) -> list[str]:
@@ -252,6 +428,35 @@ def topic_from_query(query: str) -> str:
     return ""
 
 
+def hunt_urls(query: str, limit: int = 5) -> list[tuple[str, str]]:
+    """Search the public web, then Wikipedia. Official docs get an extra query."""
+    found: list[tuple[str, str]] = []
+    seen: set[str] = set()
+
+    def add(title: str, url: str) -> None:
+        url = as_readable_url(url.rstrip(".,;]"))
+        if not host_allowed(url) or url in seen:
+            return
+        seen.add(url)
+        found.append((title.strip() or url, url))
+
+    queries = [query]
+    topic = topic_from_query(query)
+    for hint in DOCS_HINTS.get(topic, ()):
+        queries.append(f"{query} {hint}")
+    for item in queries:
+        for title, url in web_search(item, limit=limit):
+            add(title, url)
+            if len(found) >= limit:
+                return found[:limit]
+    title = wiki_search(query)
+    if title:
+        langs = ("ru", "en") if re.search(r"[А-Яа-яЁё]", query) else ("en", "ru")
+        for lang in langs:
+            add(title, f"https://{lang}.wikipedia.org/api/rest_v1/page/summary/{quote(title)}")
+    return found[:limit]
+
+
 def urls_for_wish(topic: str, extra_urls: Sequence[str]) -> list[str]:
     urls = list(TOPIC_PAGES.get(topic, TOPIC_PAGES["general"]))
     for url in extra_urls:
@@ -269,12 +474,13 @@ def fetch_wish_texts(topic: str, extra_urls: Sequence[str] = ()) -> list[Path]:
         except (HTTPError, URLError, TimeoutError, ValueError) as exc:
             print(f"skip {url}: {exc}")
             continue
-        cleaned = " ".join(text.split())
+        lines = split_practice_lines(text)[:40]
+        cleaned = "\n".join(lines) if lines else " ".join(text.split())[:4000]
         if len(cleaned) < 40:
             continue
         slug = re.sub(r"[^a-zA-Z0-9]+", "-", urlparse(url).path).strip("-")[:40]
         path = WEB_DIR / f"{topic}-{slug or 'page'}.txt"
-        path.write_text(text, encoding="utf-8")
+        path.write_text(cleaned, encoding="utf-8")
         found.append(path)
-        print(f"fetched {url} -> {path} ({len(text)} chars)")
+        print(f"fetched {url} -> {path} ({len(cleaned)} chars)")
     return found

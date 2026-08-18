@@ -77,7 +77,34 @@ def is_practice_line(line: str) -> bool:
     if re.fullmatch(r"\d+(\.\d+)*\.?", line):
         return False
     letters = sum(ch.isalpha() for ch in line)
-    return letters >= 3
+    if letters < 3:
+        return False
+    if is_web_junk(line):
+        return False
+    return True
+
+
+_WEB_JUNK = (
+    "cookie",
+    "cookies",
+    "enable javascript",
+    "включите javascript",
+    "just a moment",
+    "attention required",
+    "access denied",
+    "cloudflare",
+    "captcha",
+    "подписывайтесь",
+    "приняв cookie",
+    "we use cookies",
+    "sign in",
+    "log in",
+)
+
+
+def is_web_junk(text: str) -> bool:
+    low = text.casefold()
+    return any(marker in low for marker in _WEB_JUNK)
 
 
 def split_practice_lines(text: str) -> list[str]:

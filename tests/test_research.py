@@ -6,7 +6,7 @@ from unittest.mock import patch
 from child.agent import route_tools
 from child.research import is_research_command, mission_query, run_mission
 from child.think import already_knows, next_topics
-from child.web import host_allowed, query_variants, wiki_search
+from child.web import host_allowed, parse_search_html, query_variants, wiki_search
 
 
 class ResearchTests(unittest.TestCase):
@@ -92,6 +92,7 @@ class ResearchTests(unittest.TestCase):
         with TemporaryDirectory() as tmp:
             plan = Path(tmp) / "PLAN.md"
             with (
+                patch("child.research.hunt_urls", return_value=[]),
                 patch("child.research.wiki_search", side_effect=fake_search),
                 patch("child.research.fetch_url", side_effect=fake_fetch),
                 patch("child.research.remember", return_value="ok"),
@@ -122,6 +123,7 @@ class ResearchTests(unittest.TestCase):
         with TemporaryDirectory() as tmp:
             plan = Path(tmp) / "PLAN.md"
             with (
+                patch("child.research.hunt_urls", return_value=[]),
                 patch("child.research.wiki_search", side_effect=fake_search),
                 patch("child.research.fetch_url", side_effect=fake_fetch),
                 patch("child.research.remember", return_value="ok"),
@@ -134,6 +136,48 @@ class ResearchTests(unittest.TestCase):
         self.assertIn("Битрикс24", report)
         self.assertIn("уже в тетради", report)
         self.assertIn("PHP", body)
+
+    def test_search_html_unwraps_duckduckgo_results(self) -> None:
+        html = (
+            '<a class="result__a" href="https://duckduckgo.com/l/?uddg='
+            'https%3A%2F%2Fdev.1c-bitrix.ru%2Flearning%2Fcourse%2F">'
+            "Смарт-процессы</a>"
+            '<a href="https://html.duckduckgo.com/html/">Search</a>'
+        )
+        hits = parse_search_html(html)
+        urls = [url for _title, url in hits]
+        self.assertTrue(any("dev.1c-bitrix.ru" in url for url in urls))
+        self.assertFalse(any("duckduckgo.com" in url for url in urls))
+
+    def test_mission_reads_a_public_docs_page(self) -> None:
+        with TemporaryDirectory() as tmp:
+            plan = Path(tmp) / "PLAN.md"
+            with (
+                patch(
+                    "child.research.hunt_urls",
+                    return_value=[
+                        (
+                            "Смарт-процессы",
+                            "https://dev.1c-bitrix.ru/learning/smart.php",
+                        )
+                    ],
+                ),
+                patch("child.research.wiki_search", return_value=""),
+                patch(
+                    "child.research.fetch_url",
+                    return_value=(
+                        "В смарт-процессах Битрикс24 можно добавлять блоки PHP. "
+                        "Робот выполняет код на стадии."
+                    ),
+                ),
+                patch("child.research.remember", return_value="ok"),
+                patch("child.think.load_brain_lines", return_value=["PHP — язык."]),
+                patch("child.research.PLAN_PATH", plan),
+                patch("child.research.urls_for_wish", return_value=[]),
+            ):
+                report = run_mission("изучи как устроены смарт-процессы в битриксе")
+        self.assertIn("Смарт-процессы", report)
+        self.assertIn("PHP", report)
 
 
 if __name__ == "__main__":
