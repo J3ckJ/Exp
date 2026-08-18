@@ -194,6 +194,7 @@ class ResearchTests(unittest.TestCase):
 
     def test_structure_reads_the_full_wiki_article(self) -> None:
         from child.ingest import is_toc_junk, is_weak_note
+        from child.think import hit_score
         from child.tools import wiki_url
 
         self.assertIn("titles=Git", wiki_url("Git", "en", full=True))
@@ -208,6 +209,13 @@ class ResearchTests(unittest.TestCase):
         self.assertTrue(is_toc_junk(toc))
         self.assertTrue(
             is_weak_note("This is the latest accepted revision , reviewed on 17 August 2026 .", web=True)
+        )
+        from child.ingest import is_disambiguation
+
+        self.assertTrue(
+            is_disambiguation(
+                "TLS may refer to: Transport Layer Security; Thread-local storage."
+            )
         )
         page = (
             "Git - Wikipedia Jump to content From Wikipedia, the free encyclopedia. "
@@ -259,6 +267,34 @@ class ResearchTests(unittest.TestCase):
         self.assertNotIn("architecture Git", blob)
         self.assertEqual(topic_from_query("как устроен Git"), "git")
         self.assertEqual(topic_from_query("GitHub Actions"), "github")
+        tls_article = hit_score(
+            "Transport Layer Security",
+            "https://en.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=Transport_Layer_Security",
+            "как устроен TLS",
+        )
+        tls_dab = hit_score(
+            "TLS",
+            "https://en.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=TLS",
+            "как устроен TLS",
+        )
+        self.assertGreater(tls_article, tls_dab)
+        page = (
+            "Transport Layer Security (TLS) is a cryptographic protocol. "
+            "It runs in the presentation layer and is itself composed of two layers: "
+            "the TLS record and the TLS handshake protocols. "
+            "Once the client and server have agreed to use TLS, they negotiate a "
+            "stateful connection by using a handshaking procedure (see § TLS handshake). "
+            "Another mechanism is STARTTLS, for example when using some mail and news protocols."
+        )
+        with patch("child.think.load_brain_lines", return_value=[]):
+            follow = next_topics("как устроен TLS", page)
+        topics = [topic.casefold() for topic, _why in follow]
+        blob = " ".join(topics)
+        self.assertNotIn("mail", blob)
+        self.assertNotIn("news", blob)
+        self.assertFalse(any("§" in topic for topic in topics))
+        self.assertFalse(any(topic.startswith("some ") for topic in topics))
+        self.assertTrue(any("handshak" in topic for topic in topics))
 
     def test_weak_html_is_not_a_note(self) -> None:
         from child.ingest import clean_web_text, is_weak_note

@@ -291,3 +291,26 @@ The DNS is broken up into different zones, distinctly managed areas in the DNS n
 
 DNS zones are not necessarily physically separated from one another; however, a DNS zone can contain multiple subdomains, and multiple zones can exist on the same server.
 
+## Запомнил
+
+It runs in the presentation layer and is itself composed of two layers: the TLS record and the TLS handshake protocols.
+
+## Запомнил
+
+To generate the session keys used for the secure connection, the client either: encrypts a random number (PreMasterSecret) with the server's public key and sends the result to the server (which only the server should…
+
+## Запомнил
+
+During this handshake, the client and server agree on various parameters used to establish the connection's security: The handshake begins when a client connects to a TLS-enabled server requesting a secure connection…
+
+## Запомнил
+
+If any one of the above steps fails, then the TLS handshake fails and the connection is not created.
+
+## Запомнил
+
+Transport Layer Security (TLS) is a cryptographic protocol designed to provide communications security over a computer network, such as the Internet.
+
+## Запомнил
+
+Once the client and server have agreed to use TLS, they negotiate a stateful connection by using a handshaking procedure.

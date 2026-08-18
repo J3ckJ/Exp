@@ -52,6 +52,7 @@ DOCS_HINTS = {
     "git": ("site:git-scm.com",),
     "http": ("site:developer.mozilla.org",),
     "dns": ("site:en.wikipedia.org",),
+    "tls": ("site:developer.mozilla.org Transport Layer Security",),
 }
 
 TOPIC_PAGES: dict[str, tuple[str, ...]] = {
@@ -102,6 +103,7 @@ TOPIC_PAGES: dict[str, tuple[str, ...]] = {
     "tls": (
         "https://en.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&redirects=1&format=json&titles=Transport_Layer_Security",
         "https://en.wikipedia.org/api/rest_v1/page/summary/Transport_Layer_Security",
+        "https://developer.mozilla.org/en-US/docs/Web/Security/Transport_Layer_Security",
     ),
     "dns": (
         "https://en.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&redirects=1&format=json&titles=Domain_Name_System",

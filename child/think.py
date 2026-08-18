@@ -439,6 +439,7 @@ def wiki_title_fits(title: str, assignment: str, query: str = "") -> bool:
 def _tidy_fact(part: str, topic: str) -> str:
     """Drop a trailing echo of the topic glued on by page headings."""
     part = re.sub(r"\[\s*\d+\s*\]", " ", part)
+    part = re.sub(r"\s*\((?:see|см\.)\s*§[^)]*\)", " ", part, flags=re.I)
     topic = " ".join(topic.split()).strip()
     if topic:
         part = re.sub(r"\s+" + re.escape(topic) + r"\s*[.]*$", "", part, flags=re.I)
@@ -486,8 +487,15 @@ def hit_score(title: str, url: str, assignment: str, query: str = "") -> int:
             score += 4
         topic_low = parsed.topic.casefold()
         title_low = title.casefold().strip()
+        slug_low = slug.casefold().replace("_", " ")
         if title_low == topic_low or title_low == topic_low.replace(" ", "_"):
             score += 8
+        product = _product_tokens(parsed.topic) | _product_tokens(query)
+        for key, aliases in TITLE_ALIASES.items():
+            if key not in product and key != topic_low:
+                continue
+            if any(alias in slug_low or alias in title_low for alias in aliases):
+                score += 10
         if title_low.startswith("list of") or re.search(r"\b\d{3}\b", title_low):
             score -= 12
         if "internal" in parsed.raw.casefold() and "internal" not in blob:
@@ -613,6 +621,7 @@ def _clean_concept(chunk: str) -> str:
         chunk,
         maxsplit=1,
     )[0]
+    chunk = re.split(r"\s*\(|\s*§|\s+(?:see|см\.)\s+", chunk, maxsplit=1)[0]
     chunk = " ".join(chunk.split()).strip(" .,;:()[]")
     return chunk
 
@@ -622,16 +631,34 @@ def _is_concept(phrase: str) -> bool:
     if not 1 <= len(words) <= 4:
         return False
     low = phrase.casefold()
+    if "§" in phrase or low.startswith(("some ", "see ", "for example")):
+        return False
     if low in GENERIC_CONCEPTS or low in STOPWORDS or low in WIKI_TRAPS:
         return False
     if any(low == item or item in low for item in ("blog", "conclusion", "programming languages")):
         return False
     if all(word.casefold() in STOPWORDS for word in words):
         return False
+    filler = {
+        "some",
+        "several",
+        "various",
+        "certain",
+        "additional",
+        "such",
+        "many",
+        "any",
+        "example",
+    }
+    if words[0].casefold() in filler:
+        return False
     if words[0][:1].isdigit():
         return False
+    lowered = {word.casefold() for word in words}
+    if "mail" in lowered and "news" in lowered:
+        return False
     if any(
-        token in {word.casefold() for word in words}
+        token in lowered
         for token in ("command", "commands", "perfect", "tutorial", "article", "click")
     ):
         return False
@@ -640,7 +667,7 @@ def _is_concept(phrase: str) -> bool:
         low,
     ):
         return False
-    if any(token in {word.casefold() for word in words} for token in ("several", "scripts")):
+    if any(token in lowered for token in ("several", "scripts")):
         return False
     if len(words) >= 3 and sum(word[:1].isupper() for word in words) >= 3:
         return False

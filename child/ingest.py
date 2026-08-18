@@ -159,6 +159,12 @@ def is_weak_note(line: str, *, web: bool = False) -> bool:
         return True
     if web and re.search(r"={3,}|\[rfc\s*\d+", low):
         return True
+    if web and re.search(
+        r"thread-local storage|thread level speculation|transparent lan service|"
+        r"may refer to|может означать",
+        low,
+    ):
+        return True
     if web and line.endswith("?") and re.match(
         r"(?i)(what|how|where|who|why|когда|что |как )", line
     ):
@@ -193,6 +199,14 @@ def is_skin_junk(text: str) -> bool:
     if "<link rel" in low or "mw-data:templatestyles" in low:
         return True
     return False
+
+
+def is_disambiguation(text: str) -> bool:
+    low = text.casefold()[:2000]
+    return any(
+        mark in low
+        for mark in ("may refer to", "может означать", "disambiguation")
+    )
 
 
 def is_code_junk(text: str) -> bool:

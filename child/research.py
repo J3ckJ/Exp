@@ -7,7 +7,15 @@ from pathlib import Path
 
 from urllib.parse import unquote, urlparse
 
-from child.ingest import is_code_junk, is_skin_junk, is_toc_junk, is_weak_note, is_web_junk, split_practice_lines
+from child.ingest import (
+    is_code_junk,
+    is_disambiguation,
+    is_skin_junk,
+    is_toc_junk,
+    is_weak_note,
+    is_web_junk,
+    split_practice_lines,
+)
 from child.memory import remember
 from child.think import (
     already_knows,
@@ -242,6 +250,9 @@ def _read_topic(
         if is_code_junk(text) or is_toc_junk(text) or is_skin_junk(text):
             print(f"skip skin page {url}")
             continue
+        if is_disambiguation(text):
+            print(f"skip disambiguation {url}")
+            continue
         score = page_score(text, assignment, url, query=query)
         if score < 0:
             print(f"skip unrelated {url}")
@@ -383,6 +394,8 @@ def gap_from_plan() -> str:
     for topic in _plan_follow_topics():
         low = topic.casefold()
         if not topic or low in GENERIC_CONCEPTS or topic[:1].isdigit() or len(topic.split()) > 5:
+            continue
+        if low.startswith(("some ", "see ")) or "§" in topic:
             continue
         if not knows_deeply(topic):
             return topic
