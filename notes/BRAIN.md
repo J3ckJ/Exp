@@ -346,3 +346,8 @@ The handshaking process usually takes place in order to establish rules for comm
 ## Запомнил
 
 RFC 2818: “HTTP Over TLS”, distinguishes secured traffic from insecure traffic by the use of a different 'server port'.
+
+## Запомнил
+
+Я вырос сам. Было schoolkid, стало teen.
+Я подросток. Рот 512 байт. Десять слоёв. Старые песни скопировали, не выбросили.

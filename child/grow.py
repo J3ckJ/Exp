@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import shutil
+import sys
 from pathlib import Path
 
 import torch
@@ -167,6 +168,8 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(line_buffering=True)
     args = parse_args()
     grew = run_self_grow(
         args.checkpoint,

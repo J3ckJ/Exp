@@ -16,6 +16,13 @@ class ChildTests(unittest.TestCase):
         self.assertEqual(tensor.dtype, torch.long)
         self.assertLess(int(tensor.max()), 256)
 
+    def test_trailing_utf8_cut_does_not_show_replacement(self) -> None:
+        tensor = text_to_bytes("Мама")
+        clipped = tensor[:-1]
+        decoded = bytes_to_text(clipped)
+        self.assertNotIn("\ufffd", decoded)
+        self.assertTrue(decoded.startswith("Мам"))
+
     def test_forward_and_loss_shape(self) -> None:
         config = ChildConfig(block_size=32, n_layer=2, n_head=2, n_embd=32)
         model = Child(config)
