@@ -7,7 +7,7 @@ from pathlib import Path
 
 from urllib.parse import unquote, urlparse
 
-from child.ingest import is_code_junk, is_weak_note, is_web_junk, split_practice_lines
+from child.ingest import is_code_junk, is_toc_junk, is_weak_note, is_web_junk, split_practice_lines
 from child.memory import remember
 from child.think import (
     already_knows,
@@ -190,10 +190,16 @@ def _read_topic(
         if host_allowed(url):
             tries.append((url, url))
     for hunt in search_queries(query)[:3]:
-        tries.extend(hunt_urls(hunt, limit=5))
+        tries.extend(
+            hunt_urls(
+                hunt,
+                limit=5,
+                summary=parse_assignment(assignment).intent != "structure",
+            )
+        )
     parsed = parse_assignment(query)
     title = ""
-    if prefer_ru or re.search(r"[А-Яа-яЁё]", query):
+    if prefer_ru:
         langs = ("ru", "en", "simple")
     else:
         langs = ("en", "simple", "ru")
@@ -205,10 +211,11 @@ def _read_topic(
     if wiki_title and not wiki_title_fits(wiki_title, assignment):
         print(f"skip unrelated wiki {wiki_title}")
         wiki_title = ""
+    full_wiki = parse_assignment(assignment).intent == "structure"
     if wiki_title:
         title = wiki_title
         for lang in langs:
-            tries.append((wiki_title, wiki_url(wiki_title, lang)))
+            tries.append((wiki_title, wiki_url(wiki_title, lang, full=full_wiki)))
 
     tries.sort(key=lambda item: hit_score(item[0], item[1], assignment), reverse=True)
     seen_urls: set[str] = set(skip_urls or ())
@@ -226,8 +233,8 @@ def _read_topic(
         fetched += 1
         if not text or len(text) < 40 or _looks_like_json(text) or is_web_junk(text[:240]):
             continue
-        if is_code_junk(text):
-            print(f"skip code page {url}")
+        if is_code_junk(text) or is_toc_junk(text):
+            print(f"skip code page {url}" if is_code_junk(text) else f"skip toc page {url}")
             continue
         score = page_score(text, assignment, url, query=query)
         if best is None or score > best[0]:
@@ -268,7 +275,7 @@ def run_mission(wish: str) -> str:
             query,
             extra if pages == 0 else [],
             assignment,
-            prefer_ru=bool(re.search(r"[А-Яа-яЁё]", assignment)),
+            prefer_ru=bool(re.search(r"[А-Яа-яЁё]", parse_assignment(query).topic)),
             skip_urls=seen_urls,
         )
         extra = []

@@ -443,7 +443,8 @@ def relevant_facts(text: str, assignment: str, limit: int = 3) -> list[str]:
     stems = _tokens(parsed.topic) | _tokens(parsed.raw)
     scored: list[tuple[int, str]] = []
     seen: set[str] = set()
-    for part in _sentences(text)[:30]:
+    window = 50 if parsed.intent == "structure" else 30
+    for part in _sentences(text)[:window]:
         if len(part) < 24 or is_web_junk(part) or is_weak_note(part, web=True):
             continue
         key = part.casefold()
@@ -566,8 +567,6 @@ def _strong_craft_link(sentence: str) -> bool:
     return any(
         mark in low
         for mark in (
-            "написан",
-            "written in",
             "блоки",
             "под капотом",
             "uses ",
@@ -602,6 +601,11 @@ def next_topics(assignment: str, page: str, limit: int = 2) -> list[tuple[str, s
                 add(topic, why)
 
     for sentence in _sentences(page):
+        if "{{" in sentence or any(
+            mark in sentence.casefold()
+            for mark in ("jump to content", "from wikipedia", "cite web", "not to be confused")
+        ):
+            continue
         about = any(_has_stem(sentence, stem) for stem in stems)
         if not about or not _has_link_verb(sentence):
             continue
@@ -631,13 +635,22 @@ def follow_query(assignment: str, concept: str) -> str:
 
 
 def has_mechanism(text: str) -> bool:
-    for sentence in _sentences(text)[:12]:
+    seen = 0
+    for sentence in _sentences(text)[:40]:
         if any(mark in sentence.casefold() for mark in HISTORY_MARKS):
             continue
+        if any(
+            mark in sentence.casefold()
+            for mark in ("jump to content", "from wikipedia", "cite web")
+        ):
+            continue
+        seen += 1
         if _has_link_verb(sentence):
             return True
         if any(mark in _norm(sentence) for mark in MECHANISM_MARKS):
             return True
+        if seen >= 16:
+            break
     return False
 
 

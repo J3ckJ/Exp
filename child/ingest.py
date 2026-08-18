@@ -130,7 +130,11 @@ def is_weak_note(line: str, *, web: bool = False) -> bool:
     low = line.casefold()
     if low in {"courses", "navigation", "home", "index"}:
         return True
-    if re.search(r"/ хабр|geeksforgeeks| - youtube", low):
+    if web and re.search(
+        r"jump to content|from wikipedia|for other uses|not to be confused|"
+        r"\{\{cite|/ хабр|geeksforgeeks| - youtube",
+        low,
+    ):
         return True
     if "console." in low or low.startswith("//") or ("{" in line and "function" in low):
         return True
@@ -158,6 +162,14 @@ def is_weak_note(line: str, *, web: bool = False) -> bool:
         ):
             return True
     return False
+
+
+def is_toc_junk(text: str) -> bool:
+    """Book skins whose first screen is a chapter list, not the lesson."""
+    head = text[:2000]
+    numbered = len(re.findall(r"\b\d+\.\d+\b", head))
+    chapters = len(re.findall(r"(?i)\b(chapters?|getting started|contents)\b", head))
+    return numbered >= 6 and chapters >= 1
 
 
 def is_code_junk(text: str) -> bool:

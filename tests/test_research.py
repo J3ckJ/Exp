@@ -152,7 +152,30 @@ class ResearchTests(unittest.TestCase):
         self.assertIn("architecture", queries)
         self.assertIn("docker", queries)
 
-    def test_git_facts_are_not_headings(self) -> None:
+    def test_structure_reads_the_full_wiki_article(self) -> None:
+        from child.ingest import is_toc_junk
+        from child.tools import wiki_url
+
+        self.assertIn("/wiki/Git", wiki_url("Git", "en", full=True))
+        self.assertIn("/page/summary/Git", wiki_url("Git", "en"))
+        toc = (
+            "Git - Plumbing and Porcelain Chapters 1. Getting Started 1.1 About "
+            "Version Control 1.2 A Short History of Git 1.3 What is Git? 1.4 "
+            "The Command Line 2. Git Basics 2.1 Getting a Git Repository 2.2 "
+            "Recording Changes 3. Git Branching 3.1 Branches in a Nutshell"
+        )
+        self.assertTrue(is_toc_junk(toc))
+        page = (
+            "Git - Wikipedia Jump to content From Wikipedia, the free encyclopedia. "
+            "Written in Primarily in C, with GUI and programming scripts written in "
+            "Shell script, Perl, Tcl and Python. "
+            "Git stores content in a content-addressable object database."
+        )
+        with patch("child.think.load_brain_lines", return_value=[]):
+            follow = next_topics("как устроен Git", page)
+        topics = " ".join(topic for topic, _why in follow).casefold()
+        self.assertNotIn("python", topics)
+        self.assertNotIn("shell", topics)
         from child.ingest import is_weak_note
         from child.think import relevant_facts
         from child.web import topic_from_query

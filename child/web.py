@@ -88,6 +88,7 @@ TOPIC_PAGES: dict[str, tuple[str, ...]] = {
         "https://ru.wikipedia.org/api/rest_v1/page/summary/Docker",
     ),
     "git": (
+        "https://en.wikipedia.org/wiki/Git",
         "https://en.wikipedia.org/api/rest_v1/page/summary/Git",
         "https://ru.wikipedia.org/api/rest_v1/page/summary/Git",
     ),
@@ -201,14 +202,20 @@ def encode_url(url: str) -> str:
 def strip_html(raw: str) -> str:
     raw = re.sub(r"(?is)<!--.*?-->", " ", raw)
     raw = re.sub(
-        r"(?is)<(script|style|noscript|svg|nav|footer|header|form|iframe)[^>]*>.*?</\1>",
+        r"(?is)<(script|style|noscript|svg|nav|footer|header|form|iframe|aside)[^>]*>.*?</\1>",
         " ",
         raw,
     )
     raw = re.sub(r"(?is)<script[^>]*>.*", " ", raw)
+    raw = re.sub(
+        r"(?is)<table\b[^>]*class=\"[^\"]*(?:infobox|navbox|sidebar)[^\"]*\"[^>]*>.*?</table>",
+        " ",
+        raw,
+    )
     raw = re.sub(r"(?is)</?(p|div|li|h1|h2|h3|h4|tr|section|article|br)[^>]*>", "\n", raw)
     raw = re.sub(r"(?s)<[^>]+>", " ", raw)
     text = unescape(raw)
+    text = re.sub(r"\{\{[^}]{0,400}\}\}", " ", text)
     lines = [" ".join(line.split()) for line in text.splitlines()]
     return "\n".join(line for line in lines if line)
 
@@ -258,8 +265,8 @@ def urls_in_text(text: str) -> list[str]:
     return cleaned
 
 
-def as_readable_url(url: str) -> str:
-    """Prefer Wikipedia JSON extract over the full skin."""
+def as_readable_url(url: str, *, summary: bool = True) -> str:
+    """Wikipedia JSON extract for «what is»; keep the full article for «how it is built»."""
     parsed = urlparse(url)
     host = (parsed.hostname or "").lower()
     match = re.match(r"^(ru|en|simple)\.wikipedia\.org$", host)
@@ -267,7 +274,9 @@ def as_readable_url(url: str) -> str:
         title = unquote(parsed.path.split("/wiki/", 1)[1])
         title = title.split("#", 1)[0]
         if title and not title.startswith(("Special:", "File:", "Служебная:")):
-            return f"https://{host}/api/rest_v1/page/summary/{quote(title)}"
+            if summary:
+                return f"https://{host}/api/rest_v1/page/summary/{quote(title)}"
+            return f"https://{host}/wiki/{quote(title)}"
     return url
 
 
@@ -453,13 +462,13 @@ def topic_from_query(query: str) -> str:
     return ""
 
 
-def hunt_urls(query: str, limit: int = 5) -> list[tuple[str, str]]:
+def hunt_urls(query: str, limit: int = 5, *, summary: bool = True) -> list[tuple[str, str]]:
     """Search the public web, then Wikipedia. Official docs get an extra query."""
     found: list[tuple[str, str]] = []
     seen: set[str] = set()
 
     def add(title: str, url: str) -> None:
-        url = as_readable_url(url.rstrip(".,;]"))
+        url = as_readable_url(url.rstrip(".,;]"), summary=summary)
         if not host_allowed(url) or url in seen:
             return
         seen.add(url)
@@ -478,7 +487,10 @@ def hunt_urls(query: str, limit: int = 5) -> list[tuple[str, str]]:
     if title:
         langs = ("ru", "en") if re.search(r"[А-Яа-яЁё]", query) else ("en", "ru")
         for lang in langs:
-            add(title, f"https://{lang}.wikipedia.org/api/rest_v1/page/summary/{quote(title)}")
+            if summary:
+                add(title, f"https://{lang}.wikipedia.org/api/rest_v1/page/summary/{quote(title)}")
+            else:
+                add(title, f"https://{lang}.wikipedia.org/wiki/{quote(title)}")
     return found[:limit]
 
 

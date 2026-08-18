@@ -108,12 +108,14 @@ def _eval_node(node: ast.AST) -> float:
     raise ValueError("unsafe")
 
 
-def wiki_url(title: str, lang: str) -> str:
+def wiki_url(title: str, lang: str, *, full: bool = False) -> str:
     host = {
         "en": "en.wikipedia.org",
         "ru": "ru.wikipedia.org",
         "simple": "simple.wikipedia.org",
     }[lang]
+    if full:
+        return f"https://{host}/wiki/{quote(title)}"
     return f"https://{host}/api/rest_v1/page/summary/{quote(title)}"
 
 
