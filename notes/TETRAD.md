@@ -206,6 +206,24 @@
 
 Ночной сторож остановился в 07:18. Последний сохранённый урок мира чуть сдвинул бы Python — допели все песни. Итог: **38500** шагов, `recite_all`. Голос в 07:33 тот же. Можно будить хозяина.
 
+## День: руки, не тело
+
+2026-08-18 утро. Тело то же: preschooler, 2 755 584. `schoolkid` нарисован (рот 256, 8 слоёв, ~6.4 млн) — не родился.
+
+Новые руки:
+
+- `выполни print("hello")` → hello
+- `выполни print(2+2)` → 4 (без import, без файлов)
+- `прочитай тетрадь` — короткие факты
+- `что умеют руки`
+
+Еда: `поучи python на гитхабе` → свой `hello_github.py` + PEP 20 (Beautiful is better than ugly). Не HTML.
+
+После GitHub снова спели все песни. 40900 шагов. Привет, print, Москва, Евгений, GitHub is where code lives — на месте.
+
+Параметры наращиваем потом, когда эти руки станут привычкой.
+
+
 
 
 
@@ -253,3 +271,21 @@
 - English is a language that started as the language of the Anglo-Saxons, in England.
 - Hello is a salutation or greeting in the English language.
 - It is first attested in writing from 1826.
+
+## Самоучка: поучи python на гитхабе
+
+2026-08-18 04:58 UTC. Источники: hello_github.py, github-python-peps-main-peps-pep-0020-rst.txt. Новых байт практики: 9336. Шагов: 600. Loss: 0.0804.
+
+В мозг-тетрадь дописал:
+- print("mama")
+- name = "Child"
+- print(name)
+- for i in range(3):
+- print(i)
+- PEP: 20
+- Title: The Zen of Python
+- Author: Tim Peters <tim.peters@gmail.com>
+- Status: Active
+- Type: Informational
+- Created: 19-Aug-2004
+- Post-History: 22-Aug-2004

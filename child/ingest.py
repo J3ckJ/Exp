@@ -56,6 +56,20 @@ def is_practice_line(line: str) -> bool:
     low = line.casefold()
     if low in _SKIP_LINES:
         return False
+    if low.startswith(
+        (
+            "pep:",
+            "title:",
+            "author:",
+            "status:",
+            "type:",
+            "created:",
+            "post-history",
+            "abstract",
+            "code-block",
+        )
+    ):
+        return False
     if line.endswith(("»", "|", "¶")):
         return False
     if ">>>" in line or ("…" in line and "prompt" in low):

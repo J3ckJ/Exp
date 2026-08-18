@@ -116,3 +116,13 @@ The Sun is the star at the centre of the Solar System.
 English is a language that started as the language of the Anglo-Saxons, in England.
 Hello is a salutation or greeting in the English language.
 It is first attested in writing from 1826.
+
+## Сам прочитал
+
+print("mama")
+name = "Child"
+print(name)
+Beautiful is better than ugly.
+Explicit is better than implicit.
+Simple is better than complex.
+GitHub is where code lives.
