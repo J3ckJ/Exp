@@ -173,6 +173,12 @@ class ResearchTests(unittest.TestCase):
         )
         self.assertGreater(git, buildings)
         self.assertGreater(http, earth)
+        status = hit_score(
+            "HTTP 404",
+            "https://en.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&titles=HTTP%20404",
+            "как устроен HTTP",
+        )
+        self.assertGreater(http, status)
         blog = hit_score(
             "What Are Git Concepts and Architecture?",
             "https://www.designveloper.com/blog/git-concepts-architecture/",

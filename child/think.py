@@ -142,6 +142,11 @@ GENERIC_CONCEPTS = {
     "architecture",
     "wikipedia",
     "internals",
+    "certain",
+    "additional",
+    "common",
+    "standard",
+    "decimal",
 }
 
 # Encyclopedia articles named after a generic word, not the product.
@@ -447,6 +452,12 @@ def hit_score(title: str, url: str, assignment: str, query: str = "") -> int:
         score += 10
         if parsed.intent == "structure":
             score += 4
+        topic_low = parsed.topic.casefold()
+        title_low = title.casefold().strip()
+        if title_low == topic_low or title_low == topic_low.replace(" ", "_"):
+            score += 8
+        if title_low.startswith("list of") or re.search(r"\b\d{3}\b", title_low):
+            score -= 12
         if "internal" in parsed.raw.casefold() and "internal" not in blob:
             score -= 8
     if host.startswith("docs.") or "/docs/" in path or "readthedocs" in host:
@@ -585,7 +596,7 @@ def _is_concept(phrase: str) -> bool:
         return False
     if all(word.casefold() in STOPWORDS for word in words):
         return False
-    if low.startswith(("not ", "only ", "also ", "very ", "full ")):
+    if words[-1].casefold() in STOPWORDS | {"of", "for", "to", "the", "a"}:
         return False
     if any(
         token in {word.casefold() for word in words}
