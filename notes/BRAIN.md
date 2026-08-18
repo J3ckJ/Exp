@@ -130,3 +130,23 @@ GitHub is where code lives.
 ## Запомнил
 
 Я вырос сам. Было preschooler, стало schoolkid.
+
+## Запомнил
+
+«Битрикс24» — российский сервис для управления бизнесом.
+
+## Запомнил
+
+Разработчик и провайдер — российская компания «Битрикс».
+
+## Запомнил
+
+PHP is a general-purpose scripting language geared towards web development.
+
+## Запомнил
+
+It was created by Danish-Canadian programmer Rasmus Lerdorf in 1993 and released in 1995.
+
+## Запомнил
+
+The PHP reference implementation is now produced by the PHP Group.
