@@ -25,7 +25,7 @@ USER_AGENT = "ExpChild/0.1 (self-study; educational)"
 TOPIC_PAGES: dict[str, tuple[str, ...]] = {
     "python": (
         "https://en.wikipedia.org/api/rest_v1/page/summary/Python_(programming_language)",
-        "https://docs.python.org/3/tutorial/introduction.html",
+        "https://simple.wikipedia.org/api/rest_v1/page/summary/Python_(programming_language)",
     ),
     "english": (
         "https://simple.wikipedia.org/api/rest_v1/page/summary/English_language",

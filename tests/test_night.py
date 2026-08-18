@@ -1,7 +1,7 @@
 import unittest
 
 from child.curriculum import load_stage
-from child.web import encode_url, host_allowed
+from child.web import TOPIC_PAGES, encode_url, host_allowed
 from child.wish import is_learn_command, parse_wish
 
 
@@ -24,6 +24,7 @@ class NightTests(unittest.TestCase):
     def test_web_whitelist(self) -> None:
         self.assertTrue(host_allowed("https://docs.python.org/3/tutorial/introduction.html"))
         self.assertTrue(host_allowed("https://en.wikipedia.org/api/rest_v1/page/summary/Hello"))
+        self.assertTrue(all("wikipedia.org" in url for url in TOPIC_PAGES["python"]))
         self.assertFalse(host_allowed("https://evil.example/steal"))
 
     def test_cyrillic_wiki_url_is_encoded(self) -> None:

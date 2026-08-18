@@ -22,6 +22,7 @@ from child.wish import parse_wish
 BRAIN_PATH = Path("notes/BRAIN.md")
 TETRAD_PATH = Path("notes/TETRAD.md")
 MAX_NEW_BRAIN_LINES = 24
+MAX_NEW_PRACTICE = 60
 
 STAGE_FOR_TOPIC = {
     "russian": "russian_power",
@@ -167,7 +168,7 @@ def run_night(
     )
     files = iter_text_files(source_paths)
     raw_parts = [read_utf8(path) for path in files]
-    practice_lines = split_practice_lines("\n".join(raw_parts))
+    practice_lines = split_practice_lines("\n".join(raw_parts))[:MAX_NEW_PRACTICE]
     new_text = join_lines(practice_lines, repeats=6)
     brain_raw = load_brain()
     brain_text = join_lines(brain_sentences(brain_raw), repeats=1)
