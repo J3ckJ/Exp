@@ -126,3 +126,7 @@ Beautiful is better than ugly.
 Explicit is better than implicit.
 Simple is better than complex.
 GitHub is where code lives.
+
+## Запомнил
+
+Я вырос сам. Было preschooler, стало schoolkid.
