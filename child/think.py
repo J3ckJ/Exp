@@ -386,6 +386,14 @@ GENERIC_HUNT = {
     "overview",
     "working",
     "wikipedia",
+    "устроен",
+    "устроена",
+    "устроено",
+    "устроены",
+    "устройство",
+    "procedure",
+    "protocol",
+    "version",
 }
 
 
@@ -399,6 +407,40 @@ def _product_tokens(text: str) -> set[str]:
     return words | extra
 
 
+def _beyond_known_product(text: str) -> set[str]:
+    """Extra tokens after a known acronym: 'TLS handshake' but not 'как устроен TLS'."""
+    if not text:
+        return set()
+    low = text.casefold()
+    for key, aliases in TITLE_ALIASES.items():
+        if not re.search(r"(?<![a-zа-яё])" + re.escape(key) + r"(?![a-zа-яё])", low):
+            continue
+        extra = _product_tokens(text) - {key} - _product_tokens(" ".join(aliases)) - GENERIC_HUNT
+        return {token for token in extra if len(token) > 3}
+    return set()
+
+
+def _stems_overlap(left: set[str], right: set[str]) -> bool:
+    if left & right:
+        return True
+    for item in left:
+        for other in right:
+            if item in other or other in item:
+                return True
+            if len(item) >= 5 and len(other) >= 5 and item[:5] == other[:5]:
+                return True
+    return False
+
+
+def wiki_page_key(url: str) -> str:
+    """Same Wikipedia article under titles=Git and titles=Git%20 is one page."""
+    slug = _wiki_slug(url)
+    if not slug:
+        return url.rstrip("/")
+    host = urlparse(url).netloc.casefold()
+    return f"{host}::{slug.casefold().replace('_', ' ')}"
+
+
 def wiki_title_fits(title: str, assignment: str, query: str = "") -> bool:
     """Skip encyclopedia articles named after a generic word, not the product."""
     if not title:
@@ -408,6 +450,11 @@ def wiki_title_fits(title: str, assignment: str, query: str = "") -> bool:
     topic = parsed.topic.casefold()
     if low in WIKI_TRAPS:
         return low == topic or any(part == low for part in topic.split())
+    hunt = query or assignment
+    extra = _beyond_known_product(hunt) | _beyond_known_product(query)
+    title_tokens = _product_tokens(title)
+    if extra and not _stems_overlap(extra, title_tokens):
+        return False
     if " " not in title.strip():
         product = (
             _product_tokens(parsed.topic)
@@ -416,7 +463,7 @@ def wiki_title_fits(title: str, assignment: str, query: str = "") -> bool:
         )
         if not product:
             return True
-        return bool(product & _product_tokens(title)) or any(
+        return bool(product & title_tokens) or any(
             token in low for token in product if len(token) > 3
         )
     product = (
@@ -426,9 +473,8 @@ def wiki_title_fits(title: str, assignment: str, query: str = "") -> bool:
     )
     if not product:
         return True
-    if product & _product_tokens(title):
+    if product & title_tokens:
         return True
-    blob = f"{low} {topic} {query.casefold()}"
     for key, aliases in TITLE_ALIASES.items():
         if key in product or key == topic:
             if any(alias in low for alias in aliases) or key in low:
@@ -659,7 +705,17 @@ def _is_concept(phrase: str) -> bool:
         return False
     if any(
         token in lowered
-        for token in ("command", "commands", "perfect", "tutorial", "article", "click")
+        for token in (
+            "command",
+            "commands",
+            "perfect",
+            "tutorial",
+            "article",
+            "click",
+            "must",
+            "imap",
+            "pop3",
+        )
     ):
         return False
     if re.match(
@@ -740,6 +796,8 @@ def next_topics(assignment: str, page: str, limit: int = 2) -> list[tuple[str, s
         topic = _canonicalize(topic)
         key = topic.casefold()
         if key in seen or key == parsed.raw.casefold() or key == parsed.topic.casefold():
+            return
+        if parsed.topic and key.startswith(parsed.topic.casefold() + " "):
             return
         if key in _norm(parsed.topic) and " " not in topic:
             return

@@ -157,7 +157,7 @@ def is_weak_note(line: str, *, web: bool = False) -> bool:
         low,
     ):
         return True
-    if web and re.search(r"={3,}|\[rfc\s*\d+", low):
+    if web and re.search(r"={2,}|\[rfc\s*\d+", low):
         return True
     if web and re.search(
         r"thread-local storage|thread level speculation|transparent lan service|"

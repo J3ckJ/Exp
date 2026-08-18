@@ -314,3 +314,19 @@ Transport Layer Security (TLS) is a cryptographic protocol designed to provide c
 ## Запомнил
 
 Once the client and server have agreed to use TLS, they negotiate a stateful connection by using a handshaking procedure.
+
+## Запомнил
+
+Когда соединение только устанавливается, взаимодействие идёт по протоколу TLS handshake, content type которого — 22.
+
+## Запомнил
+
+Фаза переговоров: Клиент посылает сообщение ClientHello, указывая последнюю версию поддерживаемого TLS-протокола, случайное число и список поддерживаемых шифронаборов (методов шифрования, англ.
+
+## Запомнил
+
+TLS и SSL используют асимметричное шифрование для аутентификации, симметричное шифрование для конфиденциальности и коды аутентичности сообщений для сохранения целостности сообщений.
+
+## Запомнил
+
+TLS provides endpoint authentication and communications confidentiality over the Internet using cryptography.

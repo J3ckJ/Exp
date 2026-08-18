@@ -32,7 +32,9 @@ from child.think import (
     parse_assignment,
     relevant_facts,
     search_queries,
+    wiki_page_key,
     wiki_title_fits,
+    _beyond_known_product,
 )
 from child.tools import first_fact, wiki_url
 from child.web import (
@@ -218,7 +220,7 @@ def _read_topic(
     else:
         langs = ("en", "simple", "ru")
     topic = topic_from_query(query) or topic_from_query(parsed.topic)
-    if topic:
+    if topic and not _beyond_known_product(query):
         for url in urls_for_wish(topic, ()):
             tries.append((topic, url))
     wiki_title = wiki_search(parsed.topic) or wiki_search(query)
@@ -236,9 +238,11 @@ def _read_topic(
     best: tuple[int, str, str, str] | None = None
     fetched = 0
     for label, url in tries:
-        if url in seen_urls or not host_allowed(url):
+        key = wiki_page_key(url)
+        if url in seen_urls or key in seen_urls or not host_allowed(url):
             continue
         seen_urls.add(url)
+        seen_urls.add(key)
         try:
             text = fetch_url(url)
         except Exception as exc:
@@ -302,6 +306,7 @@ def run_mission(wish: str) -> str:
         pages += 1
         if source:
             seen_urls.add(source)
+            seen_urls.add(wiki_page_key(source))
         if not extract:
             log.append(f"не нашёл: {query}")
             report.append(f"Не нашёл страницу про «{query}».")

@@ -425,7 +425,10 @@ def query_variants(query: str) -> list[str]:
     variants: list[str] = []
     topic = topic_from_query(query)
     if topic in TOPIC_SEARCH:
-        variants.append(TOPIC_SEARCH[topic])
+        from child.think import _beyond_known_product
+
+        if not _beyond_known_product(cleaned):
+            variants.append(TOPIC_SEARCH[topic])
     if cleaned:
         variants.append(cleaned)
     tokens = re.findall(r"[A-Za-zА-Яа-яЁё0-9]+", cleaned)

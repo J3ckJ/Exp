@@ -210,6 +210,12 @@ class ResearchTests(unittest.TestCase):
         self.assertTrue(
             is_weak_note("This is the latest accepted revision , reviewed on 17 August 2026 .", web=True)
         )
+        self.assertTrue(
+            is_weak_note(
+                "== Безопасность == TLS имеет множество мер безопасности.",
+                web=True,
+            )
+        )
         from child.ingest import is_disambiguation
 
         self.assertTrue(
@@ -295,6 +301,32 @@ class ResearchTests(unittest.TestCase):
         self.assertFalse(any("§" in topic for topic in topics))
         self.assertFalse(any(topic.startswith("some ") for topic in topics))
         self.assertTrue(any("handshak" in topic for topic in topics))
+        self.assertFalse(any(topic.startswith("tls ") for topic in topics))
+        page = (
+            "Applications generally use TLS as if it were a transport layer, even though "
+            "applications using TLS must actively control initiating TLS handshakes. "
+            "Other RFCs subsequently extended TLS, including RFC 2595: Using TLS with IMAP."
+        )
+        with patch("child.think.load_brain_lines", return_value=[]):
+            follow = next_topics("как устроен TLS", page)
+        topics = [topic.casefold() for topic, _why in follow]
+        blob = " ".join(topics)
+        self.assertNotIn("imap", blob)
+        self.assertFalse(any("must" in topic for topic in topics))
+        from child.think import wiki_page_key, wiki_title_fits as fits
+
+        self.assertFalse(fits("Transport Layer Security", "TLS handshaking procedure"))
+        self.assertTrue(fits("TLS handshake", "TLS handshaking procedure"))
+        self.assertTrue(fits("Transport Layer Security", "как устроен TLS", "TLS"))
+        underscored = (
+            "https://en.wikipedia.org/w/api.php?action=query&prop=extracts"
+            "&explaintext=1&titles=Transport_Layer_Security"
+        )
+        spaced = (
+            "https://en.wikipedia.org/w/api.php?action=query&prop=extracts"
+            "&explaintext=1&titles=Transport%20Layer%20Security"
+        )
+        self.assertEqual(wiki_page_key(underscored), wiki_page_key(spaced))
 
     def test_weak_html_is_not_a_note(self) -> None:
         from child.ingest import clean_web_text, is_weak_note
