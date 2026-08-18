@@ -77,6 +77,16 @@ class JarvisTests(unittest.TestCase):
         self.assertIn("Москва", fact)
         self.assertIn("столица", fact.casefold())
 
+    def test_first_fact_skips_site_menu(self) -> None:
+        extract = (
+            "Как настроить смарт-процесс в CRM Возможности Цены Интеграции "
+            "Внедрение Разработчикам Поддержка Регистрация. "
+            "Смарт-процесс в Битрикс24 — это отдельная сущность CRM со своими стадиями."
+        )
+        fact = first_fact(extract, "смарт-процесс")
+        self.assertIn("сущность", fact.casefold())
+        self.assertNotIn("Цены", fact)
+
     def test_python_run_hand(self) -> None:
         self.assertEqual(route_tools('выполни print("hello")'), "hello")
         self.assertEqual(safe_python("print(1+2)"), "3")

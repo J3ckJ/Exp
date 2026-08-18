@@ -193,8 +193,11 @@ def strip_html(raw: str) -> str:
         " ",
         raw,
     )
+    raw = re.sub(r"(?is)</?(p|div|li|h1|h2|h3|h4|tr|section|article|br)[^>]*>", "\n", raw)
     raw = re.sub(r"(?s)<[^>]+>", " ", raw)
-    return unescape(" ".join(raw.split()))
+    text = unescape(raw)
+    lines = [" ".join(line.split()) for line in text.splitlines()]
+    return "\n".join(line for line in lines if line)
 
 
 def _fetch_raw(url: str, user_agent: str = USER_AGENT) -> tuple[str, str, str]:

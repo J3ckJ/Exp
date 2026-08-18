@@ -43,6 +43,14 @@ def moscow_date() -> str:
     return f"{weekday}, {now.strftime('%d.%m.%Y')}"
 
 
+def _looks_like_menu(part: str) -> bool:
+    words = part.split()
+    if len(words) < 8:
+        return False
+    caps = sum(1 for word in words if word[:1].isupper())
+    return caps / len(words) > 0.55 and len(part) > 80
+
+
 def first_fact(text: str, query: str = "") -> str:
     """Keep the useful first sentence, even if it is longer than a school line."""
     blob = " ".join(text.split())
@@ -54,10 +62,10 @@ def first_fact(text: str, query: str = "") -> str:
         for token in re.findall(r"[A-Za-zА-Яа-яЁё0-9]+", query.casefold())
         if len(token) > 2
     }
-    best = parts[0]
+    best = ""
     best_score = -1
-    for part in parts[:8]:
-        if len(part) < 12:
+    for part in parts[:12]:
+        if len(part) < 12 or _looks_like_menu(part):
             continue
         tokens = {
             token
@@ -68,6 +76,8 @@ def first_fact(text: str, query: str = "") -> str:
         if score > best_score:
             best = part
             best_score = score
+    if not best:
+        best = next((part for part in parts if not _looks_like_menu(part)), parts[0])
     if len(best) > 220:
         clipped = best[:217].rsplit(" ", 1)[0]
         return clipped + "…"
