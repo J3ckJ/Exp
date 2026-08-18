@@ -214,3 +214,11 @@ As with most other distributed version control systems, and unlike most client�
 ## Запомнил
 
 Git provides features to synchronize changes between repositories that share history; for asynchronous collaboration, this extends to repositories on remote machines.
+
+## Запомнил
+
+HTTP is an application layer protocol in the Internet protocol suite for distributed, collaborative, hypermedia information systems.
+
+## Запомнил
+
+HTTP is the foundation of data communication for the World Wide Web, where hypertext documents include hyperlinks to other resources that the user can easily access, for example by a mouse click or by tapping the…
