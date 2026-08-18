@@ -94,11 +94,11 @@ class ResearchTests(unittest.TestCase):
                 patch("child.research.urls_for_wish", return_value=[]),
             ):
                 report = run_mission("изучи как делается ЦРМ в битриксе")
+            self.assertTrue(plan.exists())
+            body = plan.read_text(encoding="utf-8")
         self.assertIn("Битрикс24", report)
         self.assertIn("PHP", report)
         self.assertIn("Сам решил", report)
-        self.assertTrue(plan.exists())
-        body = plan.read_text(encoding="utf-8")
         self.assertIn("PHP", body)
         self.assertIn("Битрикс", body)
 

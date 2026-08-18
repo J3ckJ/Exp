@@ -44,7 +44,6 @@ ASSIGNMENT_SEEDS: tuple[tuple[tuple[str, ...], tuple[tuple[str, str], ...]], ...
 # If the page itself talks about a craft, go learn that craft.
 PAGE_HINTS: tuple[tuple[tuple[str, ...], str], ...] = (
     (("php", "пхп"), "PHP"),
-    (("смарт-процесс", "smart process", "smart-процесс"), "смарт-процесс"),
     (("javascript", "java script", "js "), "JavaScript"),
     (("python", "питон"), "Python"),
     (("rest api", "rest-api", "вебхук", "webhook"), "REST API"),
