@@ -211,7 +211,6 @@ MECHANISM_MARKS = (
     "архитектур",
     "snapshot",
     "content-address",
-    "kernel",
     "protocol",
     "протокол",
     "isolat",
@@ -229,6 +228,9 @@ HISTORY_MARKS = (
     "often used",
     "collaboratively",
     "was invented",
+    "benchmarked",
+    "most commonly used",
+    "performance goals",
     "в 19",
     "в 20",
 )
@@ -341,6 +343,7 @@ def wiki_title_fits(title: str, assignment: str) -> bool:
 
 def _tidy_fact(part: str, topic: str) -> str:
     """Drop a trailing echo of the topic glued on by page headings."""
+    part = re.sub(r"\[\s*\d+\s*\]", " ", part)
     topic = " ".join(topic.split()).strip()
     if topic:
         part = re.sub(r"\s+" + re.escape(topic) + r"\s*[.]*$", "", part, flags=re.I)
@@ -461,9 +464,11 @@ def relevant_facts(text: str, assignment: str, limit: int = 3) -> list[str]:
         score = overlap * 2 + explain
         if parsed.intent == "structure":
             if any(mark in _norm(part) for mark in MECHANISM_MARKS):
-                score += 3
+                score += 4
             if any(mark in part.casefold() for mark in HISTORY_MARKS):
-                score -= 3
+                score -= 8
+            if re.search(r"\b(?:19|20)\d{2}\b|\b\d{1,2}\s+(?:January|April|June|July)\b", part):
+                score -= 6
             if any(
                 mark in part.casefold()
                 for mark in ("our article", "this article", "this post", "overview of")
@@ -655,12 +660,16 @@ def has_mechanism(text: str) -> bool:
 
 
 def needs_deeper(assignment: str, page: str) -> bool:
-    """A definition is not an answer to «как устроен»."""
+    """A definition or a history anecdote is not an answer to «как устроен»."""
     if parse_assignment(assignment).intent != "structure":
         return False
     if next_topics(assignment, page, limit=1):
         return False
-    return not has_mechanism(page)
+    facts = relevant_facts(page, assignment, limit=3)
+    blob = _norm(" ".join(facts))
+    if any(mark in blob for mark in MECHANISM_MARKS):
+        return False
+    return True
 
 
 def deeper_query(assignment: str) -> str:

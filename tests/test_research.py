@@ -184,6 +184,13 @@ class ResearchTests(unittest.TestCase):
         self.assertTrue(is_weak_note("AI-Powered Business Software", web=True))
         self.assertTrue(
             is_weak_note(
+                "[ 28 ] Torvalds achieved his performance goals; on 29 April, "
+                "the nascent Git was benchmarked recording patches to the Linux kernel.",
+                web=True,
+            )
+        )
+        self.assertTrue(
+            is_weak_note(
                 "Our article offers a concise yet comprehensive overview of Git concepts.",
                 web=True,
             )

@@ -142,7 +142,8 @@ def is_weak_note(line: str, *, web: bool = False) -> bool:
         return True
     if web and re.search(
         r"ai-powered|our article|this article|this post|subscribe|business software|"
-        r"foundational principles|scaffolds modern",
+        r"foundational principles|scaffolds modern|benchmarked|patches per second|"
+        r"most commonly used",
         low,
     ):
         return True
