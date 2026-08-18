@@ -66,7 +66,22 @@ class ResearchTests(unittest.TestCase):
         self.assertNotIn("javascript", topics)
         self.assertNotIn("rest api", topics)
 
-    def test_structure_search_asks_architecture(self) -> None:
+    def test_definition_is_not_enough_for_structure(self) -> None:
+        from child.think import deeper_query, needs_deeper
+
+        blurb = (
+            "Git is a distributed version control software system that is capable "
+            "of managing versions of source code or data. It was originally created "
+            "by Linus Torvalds."
+        )
+        docker = (
+            "Docker is a set of products that uses operating system-level "
+            "virtualization to deliver software in packages called containers."
+        )
+        self.assertTrue(needs_deeper("как устроен Git", blurb))
+        self.assertFalse(needs_deeper("как устроен Docker", docker))
+        self.assertFalse(needs_deeper("что такое Git", blurb))
+        self.assertEqual(deeper_query("как устроен Git").casefold(), "git internals")
         from child.think import search_queries
 
         queries = " ".join(search_queries("как устроен Docker")).casefold()

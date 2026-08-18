@@ -171,6 +171,38 @@ EXPLAIN_MARKERS = (
     "образ",
 )
 
+MECHANISM_MARKS = (
+    "uses ",
+    "использует",
+    "состоит",
+    "composed",
+    "под капотом",
+    "internal",
+    "архитектур",
+    "snapshot",
+    "content-address",
+    "kernel",
+    "protocol",
+    "протокол",
+    "isolat",
+    "hash",
+    "blob",
+    "commit",
+    "namespace",
+    "cgroup",
+    "object database",
+)
+
+HISTORY_MARKS = (
+    "created by",
+    "originally",
+    "often used",
+    "collaboratively",
+    "was invented",
+    "в 19",
+    "в 20",
+)
+
 _LINK_AFTER = (
     r"(?:uses|using|via|requires|based on|built on|runs on|written in)\s+",
     r"(?:использует|используют|на базе|основан[аоы]?\s+на|под капотом|с помощью|через|"
@@ -314,6 +346,10 @@ def page_score(text: str, assignment: str, url: str = "") -> int:
     score += min(9, 3 * len(facts))
     low = _norm(text)
     if parsed.intent == "structure":
+        if has_mechanism(text):
+            score += 8
+        else:
+            score -= 6
         for mark in ("архитектур", "internal", "namespace", "cgroup", "состоит", "использует", "механизм"):
             if mark in low:
                 score += 2
@@ -341,6 +377,11 @@ def relevant_facts(text: str, assignment: str, limit: int = 3) -> list[str]:
         if overlap == 0 and not any(stem in part.casefold() for stem in stems):
             continue
         score = overlap * 2 + explain
+        if parsed.intent == "structure":
+            if any(mark in _norm(part) for mark in MECHANISM_MARKS):
+                score += 3
+            if any(mark in part.casefold() for mark in HISTORY_MARKS):
+                score -= 3
         if score <= 0:
             continue
         seen.add(key)
@@ -471,3 +512,24 @@ def follow_query(assignment: str, concept: str) -> str:
     if parsed.intent == "structure":
         return f"{parsed.topic} {concept}"
     return concept
+
+
+def has_mechanism(text: str) -> bool:
+    low = _norm(text)
+    if any(mark in low for mark in MECHANISM_MARKS):
+        return True
+    return any(_has_link_verb(sentence) for sentence in _sentences(text)[:12])
+
+
+def needs_deeper(assignment: str, page: str) -> bool:
+    """A definition is not an answer to «как устроен»."""
+    if parse_assignment(assignment).intent != "structure":
+        return False
+    if next_topics(assignment, page, limit=1):
+        return False
+    return not has_mechanism(page)
+
+
+def deeper_query(assignment: str) -> str:
+    topic = parse_assignment(assignment).topic
+    return f"{topic} internals"

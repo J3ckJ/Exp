@@ -11,8 +11,11 @@ from child.ingest import is_code_junk, is_weak_note, is_web_junk, split_practice
 from child.memory import remember
 from child.think import (
     already_knows,
+    deeper_query,
     follow_query,
+    has_mechanism,
     hit_score,
+    needs_deeper,
     next_topics,
     page_score,
     parse_assignment,
@@ -178,6 +181,7 @@ def _read_topic(
     extra_urls: list[str],
     assignment: str,
     prefer_ru: bool = False,
+    skip_urls: set[str] | None = None,
 ) -> tuple[str, str, str]:
     """Hunt, rank, and pick the page that best answers the assignment."""
     tries: list[tuple[str, str]] = []
@@ -203,7 +207,7 @@ def _read_topic(
             tries.append((wiki_title, wiki_url(wiki_title, lang)))
 
     tries.sort(key=lambda item: hit_score(item[0], item[1], assignment), reverse=True)
-    seen_urls: set[str] = set()
+    seen_urls: set[str] = set(skip_urls or ())
     best: tuple[int, str, str, str] | None = None
     fetched = 0
     for label, url in tries:
@@ -224,7 +228,13 @@ def _read_topic(
         score = page_score(text, assignment, url)
         if best is None or score > best[0]:
             best = (score, _page_label(label, url), text, url)
-        if score >= 12 or fetched >= 5:
+        parsed_assign = parse_assignment(assignment)
+        if parsed_assign.intent == "structure":
+            if has_mechanism(text) and score >= 10:
+                break
+            if fetched >= 5:
+                break
+        elif score >= 12 or fetched >= 5:
             break
     if best:
         return best[1], best[2], best[3]
@@ -240,6 +250,7 @@ def run_mission(wish: str) -> str:
     understood: list[str] = []
     queue: list[str] = [assignment]
     seen: set[str] = set()
+    seen_urls: set[str] = set()
     pages = 0
     report: list[str] = [f"Задание: {assignment}"]
 
@@ -254,9 +265,12 @@ def run_mission(wish: str) -> str:
             extra if pages == 0 else [],
             assignment,
             prefer_ru=bool(re.search(r"[А-Яа-яЁё]", assignment)),
+            skip_urls=seen_urls,
         )
         extra = []
         pages += 1
+        if source:
+            seen_urls.add(source)
         if not extract:
             log.append(f"не нашёл: {query}")
             report.append(f"Не нашёл страницу про «{query}».")
@@ -287,6 +301,12 @@ def run_mission(wish: str) -> str:
                 going.append(topic)
         if going:
             log.append("сам пошёл: " + ", ".join(going))
+        elif needs_deeper(assignment, extract):
+            hunt = deeper_query(assignment)
+            if hunt.casefold() not in seen:
+                queue.append(hunt)
+                report.append(f"Это пока определение. Сам иду глубже: «{hunt}».")
+                log.append(f"мало устройства, иду: {hunt}")
 
     _note_plan(assignment, log, all_follow, understood[:6])
     report.append("Коротко записал в тетрадь и в notes/PLAN.md.")
