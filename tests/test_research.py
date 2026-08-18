@@ -54,6 +54,34 @@ class ResearchTests(unittest.TestCase):
             follow = next_topics("Привет", "Мама читает книгу. Папа пьёт чай.")
         self.assertEqual(follow, [])
 
+    def test_docker_follows_namespaces_not_javascript(self) -> None:
+        page = (
+            "Docker is a platform that uses Linux namespaces and cgroups "
+            "to isolate containers. Also check our REST API and JavaScript course."
+        )
+        with patch("child.think.load_brain_lines", return_value=[]):
+            follow = next_topics("как устроен Docker", page)
+        topics = " ".join(topic for topic, _why in follow).casefold()
+        self.assertTrue("namespace" in topics or "cgroup" in topics)
+        self.assertNotIn("javascript", topics)
+        self.assertNotIn("rest api", topics)
+
+    def test_structure_search_asks_architecture(self) -> None:
+        from child.think import search_queries
+
+        queries = " ".join(search_queries("как устроен Docker")).casefold()
+        self.assertIn("architecture", queries)
+        self.assertIn("docker", queries)
+
+    def test_weak_html_is_not_a_note(self) -> None:
+        from child.ingest import clean_web_text, is_weak_note
+
+        self.assertTrue(is_weak_note("Courses", web=True))
+        self.assertTrue(is_weak_note("Docker для начинающих: что это такое и как пользоваться / Хабр…", web=True))
+        cleaned = clean_web_text("Стабильное окружение\\u003C\\u002Fstrong\\u003E")
+        self.assertIn("Стабильное окружение", cleaned)
+        self.assertNotIn("<", cleaned)
+
     def test_wiki_search_picks_bitrix_over_unrelated(self) -> None:
         with patch(
             "child.web.wiki_search_titles",

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+from html import unescape
 from pathlib import Path
 from typing import Sequence
 
@@ -105,6 +106,33 @@ _WEB_JUNK = (
 def is_web_junk(text: str) -> bool:
     low = text.casefold()
     return any(marker in low for marker in _WEB_JUNK)
+
+
+def clean_web_text(text: str) -> str:
+    text = re.sub(r"\\u([0-9a-fA-F]{4})", lambda match: chr(int(match.group(1), 16)), text)
+    text = unescape(text)
+    text = re.sub(r"(?s)<[^>]+>", " ", text)
+    return " ".join(text.split())
+
+
+def is_weak_note(line: str, *, web: bool = False) -> bool:
+    line = " ".join(line.split()).strip()
+    if web and len(line) < 24:
+        return True
+    if len(line) < 4:
+        return True
+    if is_web_junk(line):
+        return True
+    if re.search(r"<[^>]+>|\\u00", line):
+        return True
+    low = line.casefold()
+    if low in {"courses", "navigation", "home", "index"}:
+        return True
+    if re.search(r"/ хабр|geeksforgeeks| - youtube", low):
+        return True
+    if web and sum(ch.isalpha() for ch in line) < 12:
+        return True
+    return False
 
 
 def split_practice_lines(text: str) -> list[str]:

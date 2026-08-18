@@ -48,6 +48,7 @@ DOCS_HINTS = {
     ),
     "php": ("site:www.php.net",),
     "python": ("site:docs.python.org",),
+    "docker": ("site:docs.docker.com",),
 }
 
 TOPIC_PAGES: dict[str, tuple[str, ...]] = {
@@ -81,6 +82,10 @@ TOPIC_PAGES: dict[str, tuple[str, ...]] = {
         "https://ru.wikipedia.org/api/rest_v1/page/summary/PHP",
         "https://simple.wikipedia.org/api/rest_v1/page/summary/PHP",
     ),
+    "docker": (
+        "https://en.wikipedia.org/api/rest_v1/page/summary/Docker_(software)",
+        "https://ru.wikipedia.org/api/rest_v1/page/summary/Docker",
+    ),
     "general": (
         "https://simple.wikipedia.org/api/rest_v1/page/summary/Learning",
     ),
@@ -110,6 +115,7 @@ STOPWORDS = {
 TOPIC_SEARCH = {
     "bitrix": "Битрикс24",
     "php": "PHP",
+    "docker": "Docker",
     "python": "Python",
     "english": "English language",
     "russian": "Русский язык",
@@ -418,6 +424,8 @@ def topic_from_query(query: str) -> str:
         return "github"
     if any(word in low for word in ("php", "пхп")):
         return "php"
+    if "docker" in low:
+        return "docker"
     if any(word in low for word in ("битрикс", "bitrix", "црм", "crm")):
         return "bitrix"
     if any(word in low for word in ("python", "питон")):

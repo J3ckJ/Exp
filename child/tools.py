@@ -7,7 +7,7 @@ from datetime import datetime
 from urllib.parse import quote
 from zoneinfo import ZoneInfo
 
-from child.ingest import is_web_junk
+from child.ingest import clean_web_text, is_web_junk
 from child.memory import remember
 from child.web import fetch_url, host_allowed, hunt_urls
 
@@ -53,7 +53,7 @@ def _looks_like_menu(part: str) -> bool:
 
 def first_fact(text: str, query: str = "") -> str:
     """Keep the useful first sentence, even if it is longer than a school line."""
-    blob = " ".join(text.split())
+    blob = clean_web_text(text)
     parts = [part.strip() for part in re.split(r"(?<=[.!?])\s+", blob) if part.strip()]
     if not parts:
         return blob[:220]
