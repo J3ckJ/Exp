@@ -157,6 +157,8 @@ def is_weak_note(line: str, *, web: bool = False) -> bool:
         low,
     ):
         return True
+    if web and re.search(r"={3,}|\[rfc\s*\d+", low):
+        return True
     if web and line.endswith("?") and re.match(
         r"(?i)(what|how|where|who|why|когда|что |как )", line
     ):

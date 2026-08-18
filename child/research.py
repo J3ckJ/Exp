@@ -13,6 +13,7 @@ from child.think import (
     already_knows,
     deeper_query,
     follow_query,
+    GENERIC_CONCEPTS,
     has_depth,
     has_mechanism,
     hit_score,
@@ -377,6 +378,9 @@ def _plan_assignment() -> str:
 def gap_from_plan() -> str:
     """What the last lesson left unfinished — so the child can continue alone."""
     for topic in _plan_follow_topics():
+        low = topic.casefold()
+        if not topic or low in GENERIC_CONCEPTS or topic[:1].isdigit() or len(topic.split()) > 5:
+            continue
         if not knows_deeply(topic):
             return topic
     assignment = _plan_assignment()

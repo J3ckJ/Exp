@@ -222,3 +222,72 @@ HTTP is an application layer protocol in the Internet protocol suite for distrib
 ## Запомнил
 
 HTTP is the foundation of data communication for the World Wide Web, where hypertext documents include hyperlinks to other resources that the user can easily access, for example by a mouse click or by tapping the…
+
+## Запомнил
+
+Torvalds explains: In many ways you can just see git as a filesystem—it's content-addressable, and it has a notion of versioning, but I really designed it coming at the problem from the viewpoint of a filesystem…
+
+## Запомнил
+
+Another property of Git is that it snapshots directory trees of files.
+
+## Запомнил
+
+Git addresses the issue by detecting renames while browsing the history of snapshots rather than recording it when making the snapshot.
+
+## Запомнил
+
+In Git, branches are very lightweight: a branch is only a reference to one commit.
+
+## Запомнил
+
+In HTTP protocol versions up to HTTP/2, messages are text-based, and are relatively straightforward to read and understand after you've familiarized yourself with the format.
+
+## Запомнил
+
+In HTTP/2, messages are wrapped in binary framing, which makes them slightly harder to read.
+
+## Запомнил
+
+HTTP (Hypertext Transfer Protocol) is an application layer protocol in the Internet protocol suite for distributed, collaborative, hypermedia information systems.
+
+## Запомнил
+
+HTTP is a request–response protocol in the client–server model.
+
+## Запомнил
+
+HTTP is designed to permit intermediate network elements to improve or enable communications between clients and servers.
+
+## Запомнил
+
+The Domain Name System (DNS) is a hierarchical and distributed name service that provides a naming system for computers, services, and other resources on the Internet or other Internet Protocol (IP) networks.
+
+## Запомнил
+
+DNS can also be partitioned according to class where the separate classes can be thought of as an array of parallel namespace trees.
+
+## Запомнил
+
+A secondary server uses a special automatic updating mechanism in the DNS protocol in communication with its primary to maintain an identical copy of the primary records.
+
+## Запомнил
+
+It defines the DNS protocol, a detailed specification of the data structures and data communication exchanges used in the DNS, as part of the Internet protocol suite.
+
+## Запомнил
+
+A DNS zone is a specific portion of the DNS namespace in the Domain Name System (DNS), which a specific organization or administrator manages.
+
+## Запомнил
+
+A DNS zone is an administrative space allowing more granular control of the DNS components, such as authoritative nameserver.
+
+## Запомнил
+
+The DNS is broken up into different zones, distinctly managed areas in the DNS namespace.
+
+## Запомнил
+
+DNS zones are not necessarily physically separated from one another; however, a DNS zone can contain multiple subdomains, and multiple zones can exist on the same server.
+

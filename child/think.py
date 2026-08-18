@@ -147,6 +147,9 @@ GENERIC_CONCEPTS = {
     "common",
     "standard",
     "decimal",
+    "query",
+    "octets",
+    "storage",
 }
 
 # Encyclopedia articles named after a generic word, not the product.
@@ -596,7 +599,7 @@ def _is_concept(phrase: str) -> bool:
         return False
     if all(word.casefold() in STOPWORDS for word in words):
         return False
-    if words[-1].casefold() in STOPWORDS | {"of", "for", "to", "the", "a"}:
+    if words[0][:1].isdigit():
         return False
     if any(
         token in {word.casefold() for word in words}
