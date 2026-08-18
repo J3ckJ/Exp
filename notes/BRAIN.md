@@ -81,6 +81,7 @@ print writes text.
 print("hello")
 Python is a language.
 Python is a high-level programming language.
+Python supports multiple programming paradigms but with an emphasis on object-oriented programming and dynamic typing.
 
 ## Мир
 
@@ -104,10 +105,6 @@ Water is an inorganic compound with the formula H2O.
 Я умею считать.
 Я умею запоминать.
 Я говорю, помню, смотрю и считаю.
-
-## Запомнил
-
 Москва — столица России, город федерального значения.
 Земля — третья планета от Солнца.
 The Sun is the star at the centre of the Solar System.
-Water is an inorganic compound with the formula H2O.
