@@ -384,7 +384,16 @@ def wiki_title_fits(title: str, assignment: str, query: str = "") -> bool:
     if low in WIKI_TRAPS:
         return low == topic or any(part == low for part in topic.split())
     if " " not in title.strip():
-        return True
+        product = (
+            _product_tokens(parsed.topic)
+            | _product_tokens(parse_assignment(query or assignment).topic)
+            | _product_tokens(query)
+        )
+        if not product:
+            return True
+        return bool(product & _product_tokens(title)) or any(
+            token in low for token in product if len(token) > 3
+        )
     product = (
         _product_tokens(parsed.topic)
         | _product_tokens(parse_assignment(query or assignment).topic)
@@ -428,6 +437,12 @@ def hit_score(title: str, url: str, assignment: str, query: str = "") -> int:
     slug = _wiki_slug(url) or title
     if host.endswith("wikipedia.org") and not wiki_title_fits(slug, assignment, query):
         return -40
+    wiki_lang = ""
+    wmatch = re.match(r"^([a-z]{2,3})\.wikipedia\.org$", host)
+    if wmatch:
+        wiki_lang = wmatch.group(1)
+        if wiki_lang not in {"en", "ru", "simple"}:
+            score -= 25
     if host.endswith("wikipedia.org"):
         score += 10
         if parsed.intent == "structure":
@@ -577,7 +592,12 @@ def _is_concept(phrase: str) -> bool:
         for token in ("command", "commands", "perfect", "tutorial", "article", "click")
     ):
         return False
-    if re.match(r"(?i)git\s+(clone|init|push|pull|commit|add|status)\b", low):
+    if re.match(
+        r"(?i)git\s+(clone|init|push|pull|commit|add|status|gc|fsck|fetch|merge|rebase)\b",
+        low,
+    ):
+        return False
+    if any(token in {word.casefold() for word in words} for token in ("several", "scripts")):
         return False
     if len(words) >= 3 and sum(word[:1].isupper() for word in words) >= 3:
         return False
@@ -662,6 +682,8 @@ def next_topics(assignment: str, page: str, limit: int = 2) -> list[tuple[str, s
                 add(topic, why)
 
     for sentence in _sentences(page):
+        if sentence.count(",") >= 4:
+            continue
         if "{{" in sentence or any(
             mark in sentence.casefold()
             for mark in ("jump to content", "from wikipedia", "cite web", "not to be confused")

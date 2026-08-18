@@ -138,7 +138,7 @@ class ResearchTests(unittest.TestCase):
         self.assertFalse(wiki_title_fits("GitHub", "как устроен Git"))
         self.assertTrue(wiki_title_fits("Git", "как устроен Git"))
         self.assertTrue(wiki_title_fits("Битрикс24", "црм в битриксе"))
-        self.assertTrue(wiki_title_fits("PHP", "црм в битриксе"))
+        self.assertTrue(wiki_title_fits("PHP", "црм в битриксе", "црм в битриксе PHP"))
         self.assertTrue(
             wiki_title_fits(
                 "OS-level virtualization",
@@ -148,6 +148,7 @@ class ResearchTests(unittest.TestCase):
         )
         self.assertFalse(wiki_title_fits("Internal structure of Earth", "как устроен HTTP"))
         self.assertFalse(wiki_title_fits("HNTB Architecture", "как устроен HTTP"))
+        self.assertFalse(wiki_title_fits("PostgreSQL", "как устроен Git"))
         self.assertTrue(wiki_title_fits("HTTP", "как устроен HTTP"))
         git = hit_score(
             "Git",

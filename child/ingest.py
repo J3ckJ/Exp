@@ -152,6 +152,7 @@ def is_weak_note(line: str, *, web: bool = False) -> bool:
     if web and line.count("{") >= 2 and ("wt" in low or "standard" in low):
         return True
     if web and re.search(
+        r"ウィキペディア|出典:|曖昧さ回避|フリー百科事典|"
         r"latest accepted revision|reviewed on |mw-deduplicated|<link rel",
         low,
     ):
