@@ -143,9 +143,12 @@ def is_weak_note(line: str, *, web: bool = False) -> bool:
     if web and re.search(
         r"ai-powered|our article|this article|this post|subscribe|business software|"
         r"foundational principles|scaffolds modern|benchmarked|patches per second|"
-        r"most commonly used",
+        r"most commonly used|\[ edit \]|british english slang|quipped|"
+        r'"wt":|wikitext',
         low,
     ):
+        return True
+    if web and line.count("{") >= 2 and ("wt" in low or "standard" in low):
         return True
     if web and line.endswith("?") and re.match(
         r"(?i)(what|how|where|who|why|когда|что |как )", line

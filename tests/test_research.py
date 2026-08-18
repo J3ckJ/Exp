@@ -181,7 +181,12 @@ class ResearchTests(unittest.TestCase):
         from child.web import topic_from_query
 
         self.assertTrue(is_weak_note("What Are Git Concepts and Architecture?", web=True))
-        self.assertTrue(is_weak_note("AI-Powered Business Software", web=True))
+        self.assertTrue(
+            is_weak_note(
+                '}}"standard":{"wt":""},"AsOf":{"wt":""}} Git',
+                web=True,
+            )
+        )
         self.assertTrue(
             is_weak_note(
                 "[ 28 ] Torvalds achieved his performance goals; on 29 April, "
