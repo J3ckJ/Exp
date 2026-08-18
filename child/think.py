@@ -224,6 +224,27 @@ MECHANISM_MARKS = (
     "entire repository",
 )
 
+DEEP_MARKS = (
+    "request-response",
+    "request–response",
+    "content-address",
+    "object database",
+    "snapshot",
+    "namespace",
+    "cgroup",
+    "stateless",
+    "header",
+    "sha-1",
+    "sha1",
+    "blob",
+    "working tree",
+    "virtualization",
+    "resolver",
+    "hierarchical",
+    "запрос",
+    "заголов",
+)
+
 HISTORY_MARKS = (
     "created by",
     "originally",
@@ -303,8 +324,8 @@ def search_queries(text: str) -> list[str]:
             (
                 f"{topic} site:wikipedia.org",
                 f"{topic} internals",
+                f"{topic} how it works",
                 f"{topic} architecture",
-                f"{topic} как устроен",
             )
         )
     queries.extend((parsed.raw, topic, f"{topic} site:wikipedia.org"))
@@ -442,7 +463,7 @@ def hit_score(title: str, url: str, assignment: str, query: str = "") -> int:
         score -= 5
     if "habr.com" in host and parsed.intent == "structure":
         score -= 3
-    if any(host.endswith(item) for item in ("git-scm.com", "php.net", "docs.docker.com")):
+    if any(host.endswith(item) for item in ("git-scm.com", "php.net", "docs.docker.com", "mozilla.org")):
         score += 6
     if "course" in blob:
         score -= 4
@@ -479,7 +500,7 @@ def relevant_facts(text: str, assignment: str, limit: int = 3) -> list[str]:
     stems = _tokens(parsed.topic) | _tokens(parsed.raw)
     scored: list[tuple[int, str]] = []
     seen: set[str] = set()
-    window = 50 if parsed.intent == "structure" else 30
+    window = 100 if parsed.intent == "structure" else 30
     for part in _sentences(text)[:window]:
         if len(part) < 24 or is_web_junk(part) or is_weak_note(part, web=True):
             continue
@@ -496,6 +517,8 @@ def relevant_facts(text: str, assignment: str, limit: int = 3) -> list[str]:
             continue
         score = overlap * 2 + explain
         if parsed.intent == "structure":
+            if any(mark in _norm(part) for mark in DEEP_MARKS):
+                score += 8
             if any(mark in _norm(part) for mark in MECHANISM_MARKS):
                 score += 4
             if any(mark in part.casefold() for mark in HISTORY_MARKS):
@@ -672,6 +695,19 @@ def follow_query(assignment: str, concept: str) -> str:
     return concept
 
 
+def has_depth(text: str) -> bool:
+    blob = _norm(text)
+    return any(mark in blob for mark in DEEP_MARKS)
+
+
+def knows_deeply(topic: str) -> bool:
+    key = topic.casefold()
+    if len(key) < 3:
+        return False
+    lines = [line for line in load_brain_lines() if key in line.casefold()]
+    return has_depth(" ".join(lines))
+
+
 def has_mechanism(text: str) -> bool:
     seen = 0
     for sentence in _sentences(text)[:40]:
@@ -693,14 +729,11 @@ def has_mechanism(text: str) -> bool:
 
 
 def needs_deeper(assignment: str, page: str) -> bool:
-    """A definition or a history anecdote is not an answer to «как устроен»."""
+    """A definition is not an answer to «как устроен» — need the moving parts."""
     if parse_assignment(assignment).intent != "structure":
         return False
-    if next_topics(assignment, page, limit=1):
-        return False
-    facts = relevant_facts(page, assignment, limit=3)
-    blob = _norm(" ".join(facts))
-    if any(mark in blob for mark in MECHANISM_MARKS):
+    facts = relevant_facts(page, assignment, limit=4)
+    if has_depth(" ".join(facts)) or has_depth(page[:4000]):
         return False
     return True
 

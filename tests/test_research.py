@@ -120,7 +120,13 @@ class ResearchTests(unittest.TestCase):
         )
         self.assertTrue(needs_deeper("как устроен Git", blurb))
         self.assertFalse(needs_deeper("как устроен Docker", docker))
-        self.assertFalse(needs_deeper("как устроен Git", design))
+        self.assertTrue(needs_deeper("как устроен Git", design))
+        self.assertFalse(
+            needs_deeper(
+                "как устроен Git",
+                "Git stores snapshots in a content-addressable object database of blobs and trees.",
+            )
+        )
         self.assertFalse(needs_deeper("что такое Git", blurb))
         self.assertEqual(deeper_query("как устроен Git").casefold(), "git internals")
 
@@ -182,7 +188,8 @@ class ResearchTests(unittest.TestCase):
         from child.ingest import is_toc_junk, is_weak_note
         from child.tools import wiki_url
 
-        self.assertIn("/wiki/Git", wiki_url("Git", "en", full=True))
+        self.assertIn("titles=Git", wiki_url("Git", "en", full=True))
+        self.assertIn("explaintext", wiki_url("Git", "en", full=True))
         self.assertIn("/page/summary/Git", wiki_url("Git", "en"))
         toc = (
             "Git - Plumbing and Porcelain Chapters 1. Getting Started 1.1 About "
@@ -395,6 +402,42 @@ class ResearchTests(unittest.TestCase):
                 report = run_mission("изучи как устроены смарт-процессы в битриксе")
         self.assertIn("Смарт-процессы", report)
         self.assertIn("PHP", report)
+
+    def test_wiki_extract_json_is_plain_text(self) -> None:
+        from child.web import _json_extract, as_readable_url, topic_from_query
+
+        payload = {
+            "query": {
+                "pages": {"1": {"title": "Git", "extract": "Git stores snapshots in objects."}}
+            }
+        }
+        self.assertIn("snapshots", _json_extract(payload))
+        raw = as_readable_url(
+            "https://git-scm.com/book/en/v2/Git-Internals-Git-Objects",
+            summary=False,
+        )
+        self.assertIn("raw.githubusercontent.com", raw)
+        self.assertIn("objects.asc", raw)
+        self.assertEqual(topic_from_query("как устроен DNS"), "dns")
+
+    def test_expand_follows_the_plan_gap(self) -> None:
+        from child.research import gap_from_plan, is_expand_command
+
+        self.assertTrue(is_expand_command("изучи дальше"))
+        self.assertTrue(is_expand_command("продолжи"))
+        self.assertFalse(is_expand_command("Привет"))
+        with TemporaryDirectory() as tmp:
+            plan = Path(tmp) / "PLAN.md"
+            plan.write_text(
+                "# План\n\n## Задание\n\nкак устроен HTTP\n\n"
+                "## Сам решил учить дальше\n\n- TCP: потому что запросы идут дальше.\n",
+                encoding="utf-8",
+            )
+            with (
+                patch("child.research.PLAN_PATH", plan),
+                patch("child.research.knows_deeply", return_value=False),
+            ):
+                self.assertEqual(gap_from_plan(), "TCP")
 
 
 if __name__ == "__main__":

@@ -13,8 +13,10 @@ from child.think import (
     already_knows,
     deeper_query,
     follow_query,
+    has_depth,
     has_mechanism,
     hit_score,
+    knows_deeply,
     needs_deeper,
     next_topics,
     page_score,
@@ -35,8 +37,8 @@ from child.web import (
 )
 
 PLAN_PATH = Path("notes/PLAN.md")
-MAX_PAGES = 4
-MAX_NOTES = 3
+MAX_PAGES = 6
+MAX_NOTES = 4
 
 
 def is_research_command(text: str) -> bool:
@@ -55,6 +57,9 @@ def is_research_command(text: str) -> bool:
         "investigate",
         "study how",
         "learn how they",
+        "изучи дальше",
+        "продолжи изучение",
+        "сам продолжи",
     )
     return any(marker in low for marker in markers)
 
@@ -312,28 +317,102 @@ def run_mission(wish: str) -> str:
                 going.append(topic)
         if going:
             log.append("сам пошёл: " + ", ".join(going))
-        elif needs_deeper(assignment, extract):
+        if needs_deeper(assignment, extract) or (
+            parse_assignment(assignment).intent == "structure"
+            and not has_depth(" ".join(understood))
+        ):
             hunt = deeper_query(assignment)
             if hunt.casefold() not in seen:
                 queue.append(hunt)
                 report.append(f"Это пока определение. Сам иду глубже: «{hunt}».")
                 log.append(f"мало устройства, иду: {hunt}")
 
-    _note_plan(assignment, log, all_follow, understood[:6])
+    _note_plan(assignment, log, all_follow, understood[:8])
     report.append("Коротко записал в тетрадь и в notes/PLAN.md.")
     return "\n".join(report)
+
+
+def is_expand_command(text: str) -> bool:
+    low = text.casefold().strip()
+    return any(
+        mark in low
+        for mark in (
+            "изучи дальше",
+            "продолжи изучение",
+            "сам продолжи",
+            "learn further",
+            "go deeper",
+        )
+    ) or low in {"expand", "продолжи", "дальше"}
+
+
+def _plan_follow_topics() -> list[str]:
+    if not PLAN_PATH.exists():
+        return []
+    topics: list[str] = []
+    in_follow = False
+    for line in PLAN_PATH.read_text(encoding="utf-8").splitlines():
+        if line.startswith("## "):
+            in_follow = "учить дальше" in line.casefold()
+            continue
+        if in_follow and line.startswith("- "):
+            topics.append(line[2:].split(":", 1)[0].strip())
+    return [topic for topic in topics if topic]
+
+
+def _plan_assignment() -> str:
+    if not PLAN_PATH.exists():
+        return ""
+    lines = PLAN_PATH.read_text(encoding="utf-8").splitlines()
+    grab = False
+    for line in lines:
+        if line.startswith("## "):
+            grab = "задание" in line.casefold()
+            continue
+        if grab and line.strip():
+            return line.strip()
+    return ""
+
+
+def gap_from_plan() -> str:
+    """What the last lesson left unfinished — so the child can continue alone."""
+    for topic in _plan_follow_topics():
+        if not knows_deeply(topic):
+            return topic
+    assignment = _plan_assignment()
+    if assignment:
+        topic = parse_assignment(assignment).topic
+        if topic and not knows_deeply(topic):
+            if parse_assignment(assignment).intent == "structure":
+                return f"как устроен {topic}"
+            return topic
+    return ""
+
+
+def run_expand() -> str:
+    gap = gap_from_plan()
+    if not gap:
+        return "Пока в плане нет дыры. Скажи тему — сам найду и углублюсь."
+    print(f"Expand: {gap!r}")
+    return run_mission(f"изучи {gap}" if gap.casefold().startswith("как ") else f"изучи как устроен {gap}")
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Hunt a topic, distill it, decide what to learn next."
     )
-    parser.add_argument("--wish", required=True)
+    parser.add_argument("--wish")
+    parser.add_argument("--expand", action="store_true")
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
+    if args.expand or (args.wish and is_expand_command(args.wish)):
+        print(run_expand())
+        return
+    if not args.wish:
+        raise SystemExit("нужно --wish или --expand")
     print(run_mission(args.wish))
 
 

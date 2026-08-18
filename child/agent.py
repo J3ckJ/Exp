@@ -16,7 +16,7 @@ from child.lesson import checkpoint_status
 from child.memory import know, remember, retrieve
 from child.talk import format_prompt
 from child.tools import lookup, moscow_date, moscow_now, safe_calc
-from child.research import is_research_command, run_mission
+from child.research import is_expand_command, is_research_command, run_expand, run_mission
 from child.wish import is_learn_command, parse_wish
 
 TIME_MARKERS = (
@@ -101,7 +101,7 @@ def route_tools(user: str) -> str | None:
     if any(marker in low for marker in KNOW_MARKERS):
         query = _after_marker(user, KNOW_MARKERS) or user
         return know(query)
-    if is_research_command(user):
+    if is_expand_command(user) or is_research_command(user):
         return None
     if any(marker in low for marker in LOOKUP_MARKERS):
         query = _after_marker(user, LOOKUP_MARKERS) or user
@@ -123,6 +123,9 @@ def speak_prompt(user: str, history: list[tuple[str, str]], block_size: int) -> 
 
 
 def study_command(user: str, learn_steps: int, checkpoint: str) -> str | None:
+    if is_expand_command(user):
+        print("Хорошо. Сам смотрю, где дыра, и иду глубже.")
+        return run_expand()
     if is_research_command(user):
         print("Хорошо. Сам ищу, читаю и решаю, чему учиться дальше.")
         return run_mission(user)

@@ -9,7 +9,7 @@ from zoneinfo import ZoneInfo
 
 from child.ingest import clean_web_text, is_web_junk
 from child.memory import remember
-from child.web import fetch_url, host_allowed, hunt_urls
+from child.web import fetch_url, host_allowed, hunt_urls, wiki_extract_url
 
 _OPS = {
     ast.Add: operator.add,
@@ -115,7 +115,7 @@ def wiki_url(title: str, lang: str, *, full: bool = False) -> str:
         "simple": "simple.wikipedia.org",
     }[lang]
     if full:
-        return f"https://{host}/wiki/{quote(title)}"
+        return wiki_extract_url(title, lang)
     return f"https://{host}/api/rest_v1/page/summary/{quote(title)}"
 
 

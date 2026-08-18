@@ -50,6 +50,8 @@ DOCS_HINTS = {
     "python": ("site:docs.python.org",),
     "docker": ("site:docs.docker.com",),
     "git": ("site:git-scm.com",),
+    "http": ("site:developer.mozilla.org",),
+    "dns": ("site:en.wikipedia.org",),
 }
 
 TOPIC_PAGES: dict[str, tuple[str, ...]] = {
@@ -88,14 +90,18 @@ TOPIC_PAGES: dict[str, tuple[str, ...]] = {
         "https://ru.wikipedia.org/api/rest_v1/page/summary/Docker",
     ),
     "git": (
-        "https://en.wikipedia.org/wiki/Git",
+        "https://en.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&redirects=1&format=json&titles=Git",
+        "https://raw.githubusercontent.com/progit/progit2/main/book/10-git-internals/sections/objects.asc",
         "https://en.wikipedia.org/api/rest_v1/page/summary/Git",
-        "https://ru.wikipedia.org/api/rest_v1/page/summary/Git",
     ),
     "http": (
-        "https://en.wikipedia.org/wiki/HTTP",
+        "https://en.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&redirects=1&format=json&titles=HTTP",
+        "https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Messages",
         "https://en.wikipedia.org/api/rest_v1/page/summary/HTTP",
-        "https://ru.wikipedia.org/api/rest_v1/page/summary/HTTP",
+    ),
+    "dns": (
+        "https://en.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&redirects=1&format=json&titles=Domain_Name_System",
+        "https://en.wikipedia.org/api/rest_v1/page/summary/Domain_Name_System",
     ),
     "general": (
         "https://simple.wikipedia.org/api/rest_v1/page/summary/Learning",
@@ -129,6 +135,7 @@ TOPIC_SEARCH = {
     "docker": "Docker",
     "git": "Git",
     "http": "HTTP",
+    "dns": "Domain Name System",
     "python": "Python",
     "english": "English language",
     "russian": "Русский язык",
@@ -246,19 +253,35 @@ def _fetch_raw(url: str, user_agent: str = USER_AGENT) -> tuple[str, str, str]:
 
 def fetch_url(url: str) -> str:
     text, ctype, final = _fetch_raw(url)
-    if "json" in ctype or "/page/summary/" in final:
+    if "json" in ctype or "/page/summary/" in final or "action=query" in final or "action=query" in url:
         try:
             payload = json.loads(text)
-            if isinstance(payload, dict):
-                extract = payload.get("extract")
-                if isinstance(extract, str) and extract.strip():
-                    return extract
+            extracted = _json_extract(payload)
+            if extracted:
+                return extracted
             return text
         except json.JSONDecodeError:
             pass
     if "<html" in text[:2000].casefold() or "</p>" in text.casefold():
         return strip_html(text)
     return text
+
+
+def _json_extract(payload: Any) -> str:
+    if not isinstance(payload, dict):
+        return ""
+    extract = payload.get("extract")
+    if isinstance(extract, str) and extract.strip():
+        return extract
+    pages = payload.get("query", {}).get("pages")
+    if isinstance(pages, dict):
+        for page in pages.values():
+            if not isinstance(page, dict):
+                continue
+            extract = page.get("extract")
+            if isinstance(extract, str) and extract.strip():
+                return extract
+    return ""
 
 
 def urls_in_text(text: str) -> list[str]:
@@ -271,19 +294,56 @@ def urls_in_text(text: str) -> list[str]:
     return cleaned
 
 
+def wiki_extract_url(title: str, lang: str) -> str:
+    host = f"{lang}.wikipedia.org"
+    return (
+        f"https://{host}/w/api.php?action=query&prop=extracts&explaintext=1"
+        f"&redirects=1&format=json&titles={quote(title)}"
+    )
+
+
+def wiki_summary_url(title: str, lang: str) -> str:
+    return f"https://{lang}.wikipedia.org/api/rest_v1/page/summary/{quote(title)}"
+
+
 def as_readable_url(url: str, *, summary: bool = True) -> str:
-    """Wikipedia JSON extract for «what is»; keep the full article for «how it is built»."""
+    """Summary for «what is»; plain-text article extract for «how it is built»."""
     parsed = urlparse(url)
     host = (parsed.hostname or "").lower()
+    rewritten = _progit_raw(url)
+    if rewritten:
+        return rewritten
     match = re.match(r"^(ru|en|simple)\.wikipedia\.org$", host)
-    if match and "/wiki/" in parsed.path:
-        title = unquote(parsed.path.split("/wiki/", 1)[1])
+    if match and ("/wiki/" in parsed.path or "/page/summary/" in parsed.path):
+        if "/wiki/" in parsed.path:
+            title = unquote(parsed.path.split("/wiki/", 1)[1])
+        else:
+            title = unquote(parsed.path.rsplit("/", 1)[-1])
         title = title.split("#", 1)[0]
         if title and not title.startswith(("Special:", "File:", "Служебная:")):
+            lang = match.group(1)
             if summary:
-                return f"https://{host}/api/rest_v1/page/summary/{quote(title)}"
-            return f"https://{host}/wiki/{quote(title)}"
+                return wiki_summary_url(title, lang)
+            return wiki_extract_url(title, lang)
     return url
+
+
+_PROGIT_SECTIONS = {
+    "git-internals-git-objects": (
+        "https://raw.githubusercontent.com/progit/progit2/main/"
+        "book/10-git-internals/sections/objects.asc"
+    ),
+    "git-internals-plumbing-and-porcelain": (
+        "https://raw.githubusercontent.com/progit/progit2/main/"
+        "book/10-git-internals/sections/plumbing-porcelain.asc"
+    ),
+}
+
+
+def _progit_raw(url: str) -> str:
+    path = urlparse(url).path.rstrip("/").casefold()
+    slug = path.rsplit("/", 1)[-1]
+    return _PROGIT_SECTIONS.get(slug, "")
 
 
 def _result_host_ok(url: str) -> bool:
@@ -366,6 +426,8 @@ def query_variants(query: str) -> list[str]:
     if words:
         variants.append(" ".join(words))
     for word in sorted(set(words), key=len, reverse=True):
+        if word.casefold() in {"internals", "architecture", "structure", "overview"}:
+            continue
         variants.append(word)
         if len(word) > 5 and word[-1].casefold() in "аеёиоуыэюяйьъ":
             variants.append(word[:-1])
@@ -453,6 +515,8 @@ def topic_from_query(query: str) -> str:
         return "php"
     if re.search(r"(?<![a-zа-яё])https?(?![a-zа-яё])", low):
         return "http"
+    if re.search(r"(?<![a-zа-яё])dns(?![a-zа-яё])|domain name", low):
+        return "dns"
     if re.search(r"(?<![a-zа-яё])git(?![a-zа-яё])", low):
         return "git"
     if "docker" in low:
@@ -468,6 +532,42 @@ def topic_from_query(query: str) -> str:
     if any(word in low for word in ("мир", "world", "земл", "москв")):
         return "world"
     return ""
+
+
+def wiki_fulltext_hits(query: str, limit: int = 5) -> list[tuple[str, str]]:
+    """Wikipedia's own search — works when DuckDuckGo returns an empty shell."""
+    query = " ".join(query.split())
+    if not query:
+        return []
+    langs = ("ru", "en") if re.search(r"[А-Яа-яЁё]", query) else ("en", "ru")
+    from child.think import wiki_title_fits
+
+    for lang in langs:
+        url = (
+            f"https://{lang}.wikipedia.org/w/api.php?action=query&list=search"
+            f"&srsearch={quote(query)}&srlimit={limit}&format=json"
+        )
+        try:
+            raw = fetch_url(url)
+            payload: Any = json.loads(raw) if raw.lstrip().startswith("{") else {}
+        except (HTTPError, URLError, TimeoutError, ValueError, json.JSONDecodeError):
+            continue
+        rows = payload.get("query", {}).get("search") if isinstance(payload, dict) else None
+        if not isinstance(rows, list):
+            continue
+        hits: list[tuple[str, str]] = []
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            title = str(row.get("title") or "").strip()
+            if not title or not wiki_title_fits(title, query):
+                continue
+            hits.append((title, wiki_extract_url(title, lang)))
+            if len(hits) >= limit:
+                break
+        if hits:
+            return hits
+    return []
 
 
 def hunt_urls(query: str, limit: int = 5, *, summary: bool = True) -> list[tuple[str, str]]:
@@ -490,16 +590,17 @@ def hunt_urls(query: str, limit: int = 5, *, summary: bool = True) -> list[tuple
         for title, url in web_search(item, limit=limit):
             add(title, url)
             if len(found) >= limit:
-                return found[:limit]
+                break
+        if len(found) >= limit:
+            break
+    for title, url in wiki_fulltext_hits(query, limit=limit):
+        add(title, url)
     title = wiki_search(query)
     if title:
         langs = ("ru", "en") if re.search(r"[А-Яа-яЁё]", query) else ("en", "ru")
         for lang in langs:
-            if summary:
-                add(title, f"https://{lang}.wikipedia.org/api/rest_v1/page/summary/{quote(title)}")
-            else:
-                add(title, f"https://{lang}.wikipedia.org/wiki/{quote(title)}")
-    return found[:limit]
+            add(title, wiki_summary_url(title, lang) if summary else wiki_extract_url(title, lang))
+    return found[: max(limit, len(found))][: limit + 4]
 
 
 def urls_for_wish(topic: str, extra_urls: Sequence[str]) -> list[str]:
