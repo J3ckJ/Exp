@@ -4,7 +4,7 @@ import json
 import re
 from html import unescape
 from pathlib import Path
-from typing import Sequence
+from typing import Any, Sequence
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote, unquote, urlparse, urlsplit, urlunsplit
 from urllib.request import Request, urlopen
@@ -45,6 +45,14 @@ TOPIC_PAGES: dict[str, tuple[str, ...]] = {
     "github": (
         "https://raw.githubusercontent.com/python/peps/main/peps/pep-0020.rst",
     ),
+    "bitrix": (
+        "https://ru.wikipedia.org/api/rest_v1/page/summary/Битрикс24",
+        "https://ru.wikipedia.org/api/rest_v1/page/summary/CRM",
+    ),
+    "php": (
+        "https://ru.wikipedia.org/api/rest_v1/page/summary/PHP",
+        "https://simple.wikipedia.org/api/rest_v1/page/summary/PHP",
+    ),
     "general": (
         "https://simple.wikipedia.org/api/rest_v1/page/summary/Learning",
     ),
@@ -83,9 +91,11 @@ def fetch_url(url: str) -> str:
     if "json" in ctype or "/page/summary/" in url:
         try:
             payload = json.loads(text)
-            extract = payload.get("extract")
-            if isinstance(extract, str) and extract.strip():
-                return extract
+            if isinstance(payload, dict):
+                extract = payload.get("extract")
+                if isinstance(extract, str) and extract.strip():
+                    return extract
+            return text
         except json.JSONDecodeError:
             pass
     if "<html" in text[:1000].casefold() or "</p>" in text.casefold():
@@ -94,8 +104,82 @@ def fetch_url(url: str) -> str:
 
 
 def urls_in_text(text: str) -> list[str]:
-    found = re.findall(r"https://raw\.githubusercontent\.com/[^\s)>\"]+", text)
-    return [url for url in found if host_allowed(url)]
+    found = re.findall(r"https://[^\s)>\"]+", text)
+    cleaned: list[str] = []
+    for url in found:
+        url = url.rstrip(".,;]")
+        if host_allowed(url) and url not in cleaned:
+            cleaned.append(url)
+    return cleaned
+
+
+def wiki_search_titles(query: str, limit: int = 5) -> list[str]:
+    query = " ".join(query.split())
+    if not query:
+        return []
+    langs = ("ru", "en") if re.search(r"[А-Яа-яЁё]", query) else ("en", "ru")
+    for lang in langs:
+        host = f"{lang}.wikipedia.org"
+        url = (
+            f"https://{host}/w/api.php?action=opensearch&search={quote(query)}"
+            f"&limit={limit}&format=json"
+        )
+        try:
+            raw = fetch_url(url)
+            payload: Any = json.loads(raw)
+        except (HTTPError, URLError, TimeoutError, ValueError, json.JSONDecodeError):
+            continue
+        if isinstance(payload, list) and len(payload) >= 2 and isinstance(payload[1], list):
+            titles = [str(item) for item in payload[1] if str(item).strip()]
+            if titles:
+                return titles
+    return []
+
+
+def _title_score(query: str, title: str) -> int:
+    q = query.casefold().replace("ё", "е")
+    t = title.casefold().replace("ё", "е")
+    score = 0
+    for token in re.findall(r"[a-zа-я0-9]+", q):
+        if len(token) < 3:
+            continue
+        stem = token[:5]
+        if token in t or stem in t:
+            score += 2
+        if t in token:
+            score += 1
+    return score
+
+
+def wiki_search(query: str) -> str:
+    titles = wiki_search_titles(query)
+    if not titles:
+        return query.strip()
+    ranked = sorted(
+        enumerate(titles),
+        key=lambda item: (_title_score(query, item[1]), -item[0]),
+        reverse=True,
+    )
+    return ranked[0][1]
+
+
+def topic_from_query(query: str) -> str:
+    low = query.casefold()
+    if any(word in low for word in ("github", "гитхаб")):
+        return "github"
+    if any(word in low for word in ("php", "пхп")):
+        return "php"
+    if any(word in low for word in ("битрикс", "bitrix", "црм", "crm")):
+        return "bitrix"
+    if any(word in low for word in ("python", "питон")):
+        return "python"
+    if any(word in low for word in ("english", "английск")):
+        return "english"
+    if any(word in low for word in ("русск", "russian")):
+        return "russian"
+    if any(word in low for word in ("мир", "world", "земл", "москв")):
+        return "world"
+    return ""
 
 
 def urls_for_wish(topic: str, extra_urls: Sequence[str]) -> list[str]:

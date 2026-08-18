@@ -16,6 +16,7 @@ from child.lesson import checkpoint_status
 from child.memory import know, remember, retrieve
 from child.talk import format_prompt
 from child.tools import lookup, moscow_date, moscow_now, safe_calc
+from child.research import is_research_command, run_mission
 from child.wish import is_learn_command, parse_wish
 
 TIME_MARKERS = (
@@ -100,6 +101,8 @@ def route_tools(user: str) -> str | None:
     if any(marker in low for marker in KNOW_MARKERS):
         query = _after_marker(user, KNOW_MARKERS) or user
         return know(query)
+    if is_research_command(user):
+        return None
     if any(marker in low for marker in LOOKUP_MARKERS):
         query = _after_marker(user, LOOKUP_MARKERS) or user
         query = re.sub(r"^(что такое|who is|look up)\s+", "", query, flags=re.I).strip(" ?")
@@ -120,6 +123,9 @@ def speak_prompt(user: str, history: list[tuple[str, str]], block_size: int) -> 
 
 
 def study_command(user: str, learn_steps: int, checkpoint: str) -> str | None:
+    if is_research_command(user):
+        print("Хорошо. Сам ищу, читаю и решаю, чему учиться дальше.")
+        return run_mission(user)
     if wants_grow(user) and not is_learn_command(user):
         print("Хорошо. Сам расту: новое тело, песни из тетради.")
         run_self_grow(checkpoint, force=True)
@@ -160,5 +166,6 @@ def jarvis_pairs() -> list[tuple[str, str]]:
         ("Выполни print", "Сейчас запущу."),
         ("Прочитай тетрадь", "Сейчас открою."),
         ("Вырасти", "Сейчас возьму больше ручек."),
+        ("Изучи это", "Сейчас сам поищу и подумаю, чему учиться дальше."),
         ("Что ты умеешь?", "Я говорю, помню, смотрю и считаю."),
     ]
