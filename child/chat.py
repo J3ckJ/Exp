@@ -45,12 +45,15 @@ def answer(
     prompt = speak_prompt(user, history, model.config.block_size)
     idx = text_to_bytes(prompt).unsqueeze(0)
     prompt_len = idx.shape[1]
+    from child.phrase import load_phrases
+
     out = model.generate(
         idx,
         max_new_bytes=n_bytes,
         temperature=temperature,
         top_k=40,
         stop_bytes=(NEWLINE,),
+        memory=load_phrases(),
     )
     raw = bytes_to_text(out[0][prompt_len:])
     text = clean_reply(raw)

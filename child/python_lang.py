@@ -12,7 +12,7 @@ x = 1
 y = 2
 print(x)
 print(y)
-name = "Child"
+name = "Tima"
 print(name)
 if x > 0:
     print("yes")

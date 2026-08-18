@@ -1,6 +1,6 @@
 print("hello")
 print("mama")
-name = "Child"
+name = "Tima"
 print(name)
 for i in range(3):
     print(i)

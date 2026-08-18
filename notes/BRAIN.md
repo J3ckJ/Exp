@@ -23,7 +23,7 @@
 Я здесь.
 Это мама.
 Это папа.
-Меня зовут Ребёнок.
+Меня зовут Тима.
 Я учусь говорить.
 Кто это? Это мама.
 Что делает мама? Мама читает книгу.
@@ -59,7 +59,7 @@
 Ты: Как дела?
 Я: Хорошо.
 Ты: Кто ты?
-Я: Меня зовут Ребёнок.
+Я: Меня зовут Тима.
 Ты: Ты умный?
 Я: Я ещё маленький. Я учусь.
 Ты: Почему небо голубое?
@@ -72,7 +72,7 @@
 Hello.
 How are you?
 I am fine. Thank you.
-My name is Child.
+My name is Tima.
 Mama eats an apple.
 
 ## Python
@@ -120,7 +120,7 @@ It is first attested in writing from 1826.
 ## Сам прочитал
 
 print("mama")
-name = "Child"
+name = "Tima"
 print(name)
 Beautiful is better than ugly.
 Explicit is better than implicit.

@@ -12,7 +12,7 @@ class TalkTests(unittest.TestCase):
         text = load_stage("russian_talk")
         self.assertIn("Ты: Привет\nЯ: Привет.", text)
         self.assertIn("Ты: Кто ты?", text)
-        self.assertIn("Меня зовут Ребёнок.", text)
+        self.assertIn("Меня зовут Тима.", text)
         self.assertIn("Мама читает книгу.", text)
         self.assertNotIn("Мама читает яблоко.", text)
 

@@ -61,12 +61,15 @@ def babble(
     device = next(model.parameters()).device
     idx = text_to_bytes(prompt).unsqueeze(0).to(device)
     stop = (10,) if "Я:" in prompt else None
+    from child.phrase import load_phrases
+
     out = model.generate(
         idx,
         max_new_bytes=max_new_bytes,
         temperature=temperature,
         top_k=40,
         stop_bytes=stop,
+        memory=load_phrases(),
     )
     text = bytes_to_text(out[0])
     if stop is not None:

@@ -129,17 +129,24 @@ class Child(nn.Module):
         temperature: float = 1.0,
         top_k: Optional[int] = 40,
         stop_bytes: Optional[Sequence[int]] = None,
+        memory: object | None = None,
     ) -> torch.Tensor:
         self.eval()
         stops = set(stop_bytes or ())
         for _ in range(max_new_bytes):
             idx_cond = idx[:, -self.config.block_size :]
             logits, _ = self(idx_cond)
-            logits = logits[:, -1, :] / max(temperature, 1e-6)
+            last = logits[:, -1, :]
+            if memory is not None:
+                ctx = bytes(int(b) for b in idx_cond[0].tolist())
+                probs = memory.mix_probs(last[0], ctx, temperature).unsqueeze(0)
+            else:
+                probs = F.softmax(last / max(temperature, 1e-6), dim=-1)
             if top_k is not None:
-                values, _ = torch.topk(logits, min(top_k, logits.size(-1)))
-                logits[logits < values[:, [-1]]] = float("-inf")
-            probs = F.softmax(logits, dim=-1)
+                values, _ = torch.topk(probs, min(top_k, probs.size(-1)))
+                keep = probs >= values[:, [-1]]
+                probs = probs * keep
+                probs = probs / probs.sum(dim=-1, keepdim=True).clamp_min(1e-9)
             next_byte = torch.multinomial(probs, num_samples=1)
             idx = torch.cat((idx, next_byte), dim=1)
             if int(next_byte.item()) in stops:

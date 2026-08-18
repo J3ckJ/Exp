@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 
-from child.grow import run_self_grow, wants_grow
+from child.grow import run_cheap_grow, wants_grow
 from child.hands import (
     HANDS_HELP,
     extract_code,
@@ -133,9 +133,9 @@ def study_command(user: str, learn_steps: int, checkpoint: str) -> str | None:
         print("Хорошо. Сам ищу, читаю и решаю, чему учиться дальше.")
         return run_mission(user)
     if wants_grow(user) and not is_learn_command(user):
-        print("Хорошо. Сам расту: новое тело, песни из тетради.")
-        run_self_grow(checkpoint, force=True)
-        return "Я вырос. Песни из тетради. Спроси меня."
+        print("Хорошо. Сам расту дёшево: тетрадь в память, тонкий слой в рот.")
+        run_cheap_grow(checkpoint)
+        return "Я Тима. Я вырос. Спроси меня."
     if not is_learn_command(user):
         return None
     parsed = parse_wish(user)
@@ -171,7 +171,7 @@ def jarvis_pairs() -> list[tuple[str, str]]:
         ("Посчитай", "Сейчас посчитаю."),
         ("Выполни print", "Сейчас запущу."),
         ("Прочитай тетрадь", "Сейчас открою."),
-        ("Вырасти", "Сейчас возьму больше ручек."),
+        ("Вырасти", "Сейчас открою тетрадь и тонко доучусь."),
         ("Изучи это", "Сейчас сам поищу и подумаю, чему учиться дальше."),
         ("Как ты учишься?", "Руки ищут, тетрадь помнит, рот только поёт."),
         ("Что ты умеешь?", "Я говорю, помню, смотрю и считаю."),
