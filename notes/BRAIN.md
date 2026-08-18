@@ -182,3 +182,35 @@ It is often used to control source code by programmers who are developing softwa
 ## Запомнил
 
 It was originally created by Linus Torvalds for version control in the development of the Linux kernel.
+
+## Запомнил
+
+Git uses a three-tree architecture.
+
+## Запомнил
+
+Snapshots, not diffs One of Git’s most consequential ideas is that each commit records a snapshot of the entire tree, not merely a diff.
+
+## Запомнил
+
+Git is a distributed revision control system.
+
+## Запомнил
+
+Git's current development is looked after by Junio Hamano.
+
+## Запомнил
+
+Git was made to be fast.
+
+## Запомнил
+
+Design goals of Git include speed, data integrity , and support for distributed , non-linear workflows—thousands of parallel branches running on different computers.
+
+## Запомнил
+
+As with most other distributed version control systems, and unlike most client–server systems, Git maintains a local copy of the entire repository , also known as the "repo", with history and version-tracking…
+
+## Запомнил
+
+Git provides features to synchronize changes between repositories that share history; for asynchronous collaboration, this extends to repositories on remote machines.
