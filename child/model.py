@@ -139,6 +139,13 @@ class Child(nn.Module):
             last = logits[:, -1, :]
             if memory is not None:
                 ctx = bytes(int(b) for b in idx_cond[0].tolist())
+                forced = memory.forced_byte(ctx) if hasattr(memory, "forced_byte") else None
+                if forced is not None:
+                    next_byte = torch.tensor([[forced]], device=idx.device)
+                    idx = torch.cat((idx, next_byte), dim=1)
+                    if int(next_byte.item()) in stops:
+                        break
+                    continue
                 probs = memory.mix_probs(last[0], ctx, temperature).unsqueeze(0)
             else:
                 probs = F.softmax(last / max(temperature, 1e-6), dim=-1)

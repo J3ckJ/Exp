@@ -11,6 +11,7 @@ NOT_BIG_RU = "Нет. Я Тима. Я учусь."
 
 def identity_pairs() -> tuple[tuple[str, str], ...]:
     return (
+        ("Привет", "Привет. Как дела?"),
         ("Как тебя зовут?", INTRO_RU),
         ("Кто ты?", INTRO_RU),
         ("Ты кто?", INTRO_RU),

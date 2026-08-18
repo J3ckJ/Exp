@@ -76,9 +76,22 @@ class LoRATests(unittest.TestCase):
         after, _ = model(idx)
         self.assertTrue(torch.allclose(before, after, atol=1e-5, rtol=1e-4))
 
-    def test_name_constant(self) -> None:
-        self.assertEqual(NAME_RU, "Тима")
-        self.assertIn("Тима", INTRO_RU)
+    def test_canned_reply_finishes_the_name(self) -> None:
+        memory = build_phrases([format_pair("Кто ты?", "Меня зовут Ребёнок.")], lengths=(6, 12))
+        from child.identity import identity_pairs
+
+        for user, child in identity_pairs():
+            memory.replies[user] = child
+        ctx = "Ты: Кто ты?\nЯ: ".encode("utf-8")
+        gathered = bytearray()
+        for _ in range(40):
+            nxt = memory.forced_byte(ctx + bytes(gathered))
+            self.assertIsNotNone(nxt)
+            gathered.append(int(nxt))
+            if nxt == 10:
+                break
+        self.assertIn("Тима", gathered.decode("utf-8"))
+        self.assertNotIn("Ребёнок", gathered.decode("utf-8"))
 
 
 if __name__ == "__main__":

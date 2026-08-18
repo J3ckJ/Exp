@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import math
 import pickle
+import re
 from pathlib import Path
 from typing import Iterable
 
@@ -39,10 +40,13 @@ class PhraseMemory:
         self.max_n = self.lengths[-1]
         self.tables: dict[int, dict[bytes, dict[int, int]]] = {n: {} for n in self.lengths}
         self.events = 0
+        self.replies: dict[str, str] = {}
 
     def add_text(self, text: str) -> None:
         data = bytes(int(b) for b in text_to_bytes(text).tolist())
         self.add_bytes(data)
+        for user, child in re.findall(r"Ты: (.+)\nЯ: (.+)\n", text):
+            self.replies[user] = child
 
     def add_bytes(self, data: bytes) -> None:
         length = len(data)
@@ -73,6 +77,38 @@ class PhraseMemory:
                 return slot, n, sum(slot.values())
         return None
 
+    def forced_byte(self, ctx: bytes) -> int | None:
+        """If this is a known turn, copy the next byte of the canned reply.
+
+        Bytewise mix of two songs ('Тима' vs 'Ребёнок') splices them. A finished
+        answer from the notebook does not. Match on raw bytes so a half UTF-8
+        character does not fall back to the neural mouth.
+        """
+        marker = "Ты: ".encode("utf-8")
+        split = "\nЯ: ".encode("utf-8")
+        start = ctx.rfind(marker)
+        if start < 0:
+            return None
+        tail = ctx[start + len(marker) :]
+        mid = tail.find(split)
+        if mid < 0:
+            return None
+        try:
+            user = tail[:mid].decode("utf-8")
+        except UnicodeDecodeError:
+            return None
+        already = tail[mid + len(split) :]
+        reply = self.replies.get(user)
+        if reply is None:
+            return None
+        target = reply.encode("utf-8")
+        if already == target:
+            return 10
+        if target.startswith(already):
+            rest = target[len(already) :]
+            return int(rest[0]) if rest else 10
+        return None
+
     def mix_probs(
         self,
         neural_logits: torch.Tensor,
@@ -92,27 +128,44 @@ class PhraseMemory:
         entropy = float(-(probs * (probs + 1e-9).log()).sum().item())
         unsure = min(1.0, entropy / math.log(256))
         strength = min(1.0, match_len / 24.0) * min(1.0, math.log(total + 1.0) / math.log(16.0))
-        lam = max(0.62 * strength, 0.40 * unsure * strength)
-        lam = min(MAX_LAM, lam)
+        if match_len >= 16 and total >= 3:
+            # Long known turn: stay on the page, do not splice two songs.
+            lam = 0.90
+        else:
+            lam = max(0.62 * strength, 0.40 * unsure * strength)
+            lam = min(MAX_LAM, lam)
         mixed = (1.0 - lam) * probs + lam * mem
         return mixed / mixed.sum().clamp_min(1e-9)
 
     def stats(self) -> str:
         keys = sum(len(table) for table in self.tables.values())
-        return f"phrase keys={keys:,} windows={self.events:,} n={','.join(str(n) for n in self.lengths)}"
+        return (
+            f"phrase keys={keys:,} replies={len(self.replies):,} "
+            f"windows={self.events:,} n={','.join(str(n) for n in self.lengths)}"
+        )
 
 
 def build_phrases(texts: Iterable[str], lengths: tuple[int, ...] = LENGTHS) -> PhraseMemory:
+    from child.identity import identity_pairs
+
     memory = PhraseMemory(lengths=lengths)
     for text in texts:
         if text:
             memory.add_text(text)
+    for user, child in identity_pairs():
+        memory.replies[user] = child
     return memory
 
 
 def save_phrases(memory: PhraseMemory, path: Path = DEFAULT_PHRASES) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_bytes(pickle.dumps(memory, protocol=pickle.HIGHEST_PROTOCOL))
+    payload = {
+        "lengths": memory.lengths,
+        "tables": memory.tables,
+        "events": memory.events,
+        "replies": memory.replies,
+    }
+    path.write_bytes(pickle.dumps(payload, protocol=pickle.HIGHEST_PROTOCOL))
     clear_phrase_cache()
 
 
@@ -127,7 +180,15 @@ def load_phrases(path: Path = DEFAULT_PHRASES) -> PhraseMemory | None:
         _LOADED[key] = None
         return None
     payload = pickle.loads(path.read_bytes())
-    memory = payload if isinstance(payload, PhraseMemory) else None
+    if isinstance(payload, PhraseMemory):
+        memory = payload
+    elif isinstance(payload, dict) and "tables" in payload:
+        memory = PhraseMemory(lengths=tuple(payload["lengths"]))
+        memory.tables = payload["tables"]
+        memory.events = int(payload.get("events") or 0)
+        memory.replies = dict(payload.get("replies") or {})
+    else:
+        memory = None
     _LOADED[key] = memory
     return memory
 
