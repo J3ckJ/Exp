@@ -113,10 +113,67 @@ def urls_in_text(text: str) -> list[str]:
     return cleaned
 
 
-def wiki_search_titles(query: str, limit: int = 5) -> list[str]:
-    query = " ".join(query.split())
-    if not query:
-        return []
+STOPWORDS = {
+    "в",
+    "во",
+    "на",
+    "и",
+    "или",
+    "для",
+    "как",
+    "про",
+    "при",
+    "the",
+    "a",
+    "an",
+    "of",
+    "in",
+    "and",
+    "for",
+    "how",
+    "they",
+}
+
+TOPIC_SEARCH = {
+    "bitrix": "Битрикс24",
+    "php": "PHP",
+    "python": "Python",
+    "english": "English language",
+    "russian": "Русский язык",
+    "world": "Земля",
+    "github": "GitHub",
+}
+
+
+def query_variants(query: str) -> list[str]:
+    """Whole phrase first, then product name, then stemmed words."""
+    cleaned = " ".join(query.split())
+    variants: list[str] = []
+    topic = topic_from_query(query)
+    if topic in TOPIC_SEARCH:
+        variants.append(TOPIC_SEARCH[topic])
+    if cleaned:
+        variants.append(cleaned)
+    tokens = re.findall(r"[A-Za-zА-Яа-яЁё0-9]+", cleaned)
+    words = [tok for tok in tokens if len(tok) > 2 and tok.casefold() not in STOPWORDS]
+    if words:
+        variants.append(" ".join(words))
+    for word in sorted(set(words), key=len, reverse=True):
+        variants.append(word)
+        if len(word) > 5 and word[-1].casefold() in "аеёиоуыэюяйьъ":
+            variants.append(word[:-1])
+    out: list[str] = []
+    seen: set[str] = set()
+    for item in variants:
+        key = item.casefold()
+        if not item or key in seen:
+            continue
+        seen.add(key)
+        out.append(item)
+    return out
+
+
+def _opensearch(query: str, limit: int) -> list[str]:
     langs = ("ru", "en") if re.search(r"[А-Яа-яЁё]", query) else ("en", "ru")
     for lang in langs:
         host = f"{lang}.wikipedia.org"
@@ -136,6 +193,17 @@ def wiki_search_titles(query: str, limit: int = 5) -> list[str]:
     return []
 
 
+def wiki_search_titles(query: str, limit: int = 5) -> list[str]:
+    query = " ".join(query.split())
+    if not query:
+        return []
+    for variant in query_variants(query):
+        titles = _opensearch(variant, limit)
+        if titles:
+            return titles
+    return []
+
+
 def _title_score(query: str, title: str) -> int:
     q = query.casefold().replace("ё", "е")
     t = title.casefold().replace("ё", "е")
@@ -148,13 +216,15 @@ def _title_score(query: str, title: str) -> int:
             score += 2
         if t in token:
             score += 1
+    if any(mark in q for mark in ("црм", "crm")) and "24" in t:
+        score += 3
     return score
 
 
 def wiki_search(query: str) -> str:
     titles = wiki_search_titles(query)
     if not titles:
-        return query.strip()
+        return ""
     ranked = sorted(
         enumerate(titles),
         key=lambda item: (_title_score(query, item[1]), -item[0]),

@@ -6,7 +6,7 @@ from unittest.mock import patch
 from child.agent import route_tools
 from child.research import is_research_command, mission_query, run_mission
 from child.think import already_knows, next_topics
-from child.web import host_allowed, wiki_search
+from child.web import host_allowed, query_variants, wiki_search
 
 
 class ResearchTests(unittest.TestCase):
@@ -60,6 +60,12 @@ class ResearchTests(unittest.TestCase):
             return_value=["CRM", "Битрикс24", "Клиент"],
         ):
             self.assertEqual(wiki_search("црм в битриксе"), "Битрикс24")
+
+    def test_bitrix_phrase_has_search_fallbacks(self) -> None:
+        variants = query_variants("ЦРМ в битриксе")
+        self.assertIn("Битрикс24", variants)
+        self.assertTrue(any(item.casefold() == "битрикс" for item in variants))
+        self.assertEqual(wiki_search(""), "")
 
     def test_wiki_search_host_is_allowed(self) -> None:
         self.assertTrue(

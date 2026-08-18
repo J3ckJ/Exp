@@ -5,6 +5,8 @@ import re
 from datetime import datetime, timezone
 from pathlib import Path
 
+from urllib.parse import unquote, urlparse
+
 from child.ingest import split_practice_lines
 from child.memory import remember
 from child.think import next_topics
@@ -120,18 +122,35 @@ def _distill(text: str, query: str) -> list[str]:
     return lines
 
 
-def _read_topic(query: str, extra_urls: list[str]) -> tuple[str, str, str]:
+def _page_label(label: str, url: str) -> str:
+    generic = {
+        "bitrix",
+        "php",
+        "python",
+        "github",
+        "general",
+        "english",
+        "russian",
+        "world",
+    }
+    if label.startswith("http") or label.casefold() in generic:
+        slug = unquote(urlparse(url).path).rstrip("/").rsplit("/", 1)[-1]
+        if slug:
+            return slug.replace("_", " ")
+    return label
+
+
+def _read_topic(query: str, extra_urls: list[str], prefer_ru: bool = False) -> tuple[str, str, str]:
     """Return title, extract, source."""
     tries: list[tuple[str, str]] = []
     for url in extra_urls:
         if host_allowed(url):
             tries.append((url, url))
     title = wiki_search(query)
-    langs = (
-        ("ru", "en", "simple")
-        if re.search(r"[А-Яа-яЁё]", query + title)
-        else ("en", "simple", "ru")
-    )
+    if prefer_ru or re.search(r"[А-Яа-яЁё]", query + title):
+        langs = ("ru", "en", "simple")
+    else:
+        langs = ("en", "simple", "ru")
     if title:
         for lang in langs:
             tries.append((title, wiki_url(title, lang)))
@@ -152,7 +171,7 @@ def _read_topic(query: str, extra_urls: list[str]) -> tuple[str, str, str]:
             continue
         if not text or len(text) < 40 or _looks_like_json(text):
             continue
-        return label, text, url
+        return _page_label(label, url), text, url
     return title, "", ""
 
 
@@ -173,7 +192,11 @@ def run_mission(wish: str) -> str:
         if key in seen:
             continue
         seen.add(key)
-        title, extract, source = _read_topic(query, extra if pages == 0 else [])
+        title, extract, source = _read_topic(
+            query,
+            extra if pages == 0 else [],
+            prefer_ru=bool(re.search(r"[А-Яа-яЁё]", assignment)),
+        )
         extra = []
         pages += 1
         if not extract:
