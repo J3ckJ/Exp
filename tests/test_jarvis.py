@@ -103,6 +103,7 @@ class JarvisTests(unittest.TestCase):
         self.assertIsNotNone(help_text)
         assert help_text is not None
         self.assertIn("Python", help_text)
+        self.assertIn("изучи", help_text)
 
     def test_github_wish(self) -> None:
         wish = parse_wish("поучи python на гитхабе")

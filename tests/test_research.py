@@ -29,6 +29,50 @@ class ResearchTests(unittest.TestCase):
         self.assertIsNone(route_tools("найди как делают CRM"))
         self.assertIsNone(route_tools("Привет"))
 
+    def test_mechanism_keeps_hands_off_the_mouth(self) -> None:
+        from child.agent import study_command
+        from child.loop import is_mechanism_question
+        from child.learn import run_night
+
+        self.assertTrue(is_mechanism_question("как ты учишься"))
+        self.assertTrue(is_mechanism_question("конечный механизм"))
+        text = route_tools("как ты учишься")
+        self.assertIsNotNone(text)
+        assert text is not None
+        self.assertIn("изучи", text)
+        self.assertIn("поучи", text)
+        self.assertIn("BRAIN.md", text)
+        with (
+            patch("child.agent.run_mission", return_value="hands") as mission,
+            patch("child.agent.run_night") as night,
+        ):
+            report = study_command("изучи как устроен TLS", 600, "checkpoints/x.pt")
+        self.assertEqual(report, "hands")
+        mission.assert_called_once()
+        night.assert_not_called()
+        with (
+            patch("child.research.run_mission", return_value="hands") as redirected,
+            patch("child.learn.load_child") as load,
+        ):
+            loss = run_night(
+                wish="изучи как устроен TLS",
+                sources=[],
+                urls=[],
+                use_web=True,
+                steps=10,
+                batch_size=4,
+                lr=1e-4,
+                seed=1,
+                resume="checkpoints/x.pt",
+                out="checkpoints/x.pt",
+                sample_every=0,
+                keep_inbox=True,
+                skip_exam=True,
+            )
+        self.assertEqual(loss, 0.0)
+        redirected.assert_called_once()
+        load.assert_not_called()
+
     def test_already_knows_needs_a_title_line(self) -> None:
         with patch(
             "child.think.load_brain_lines",

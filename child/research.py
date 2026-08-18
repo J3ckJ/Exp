@@ -1,3 +1,5 @@
+"""Hands hunt: assignment → page → notes → gap. The mouth is not in this file."""
+
 from __future__ import annotations
 
 import argparse

@@ -16,6 +16,7 @@ from child.lesson import checkpoint_status
 from child.memory import know, remember, retrieve
 from child.talk import format_prompt
 from child.tools import lookup, moscow_date, moscow_now, safe_calc
+from child.loop import describe_mechanism, is_mechanism_question
 from child.research import is_expand_command, is_research_command, run_expand, run_mission
 from child.wish import is_learn_command, parse_wish
 
@@ -77,6 +78,8 @@ def _after_marker(text: str, markers: tuple[str, ...]) -> str:
 
 def route_tools(user: str) -> str | None:
     low = user.casefold().strip()
+    if is_mechanism_question(user):
+        return describe_mechanism()
     if any(marker in low for marker in TIME_MARKERS) or low in {"время", "time"}:
         return f"В Москве сейчас {moscow_now()}."
     if wants_hands_help(user):
@@ -170,5 +173,6 @@ def jarvis_pairs() -> list[tuple[str, str]]:
         ("Прочитай тетрадь", "Сейчас открою."),
         ("Вырасти", "Сейчас возьму больше ручек."),
         ("Изучи это", "Сейчас сам поищу и подумаю, чему учиться дальше."),
+        ("Как ты учишься?", "Руки ищут, тетрадь помнит, рот только поёт."),
         ("Что ты умеешь?", "Я говорю, помню, смотрю и считаю."),
     ]

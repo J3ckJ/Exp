@@ -160,6 +160,12 @@ def run_night(
     force_grow: bool = False,
     grow_steps: int = 2500,
 ) -> float:
+    from child.research import is_research_command, run_mission
+
+    if is_research_command(wish):
+        print("«изучи» — руки, не рот. Сам ищу, в веса не кладу.")
+        print(run_mission(wish))
+        return 0.0
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(line_buffering=True)
     torch.manual_seed(seed)
