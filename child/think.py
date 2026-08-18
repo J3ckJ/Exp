@@ -515,10 +515,14 @@ def follow_query(assignment: str, concept: str) -> str:
 
 
 def has_mechanism(text: str) -> bool:
-    low = _norm(text)
-    if any(mark in low for mark in MECHANISM_MARKS):
-        return True
-    return any(_has_link_verb(sentence) for sentence in _sentences(text)[:12])
+    for sentence in _sentences(text)[:12]:
+        if any(mark in sentence.casefold() for mark in HISTORY_MARKS):
+            continue
+        if _has_link_verb(sentence):
+            return True
+        if any(mark in _norm(sentence) for mark in MECHANISM_MARKS):
+            return True
+    return False
 
 
 def needs_deeper(assignment: str, page: str) -> bool:
