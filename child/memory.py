@@ -43,13 +43,29 @@ def remember(fact: str) -> str:
     return f"Запомнил: {fact}"
 
 
+_STOP = {
+    "про",
+    "что",
+    "ты",
+    "это",
+    "как",
+    "для",
+    "или",
+    "the",
+    "and",
+    "you",
+    "for",
+}
+
+
 def _tokens(text: str) -> set[str]:
     raw = {
         part
         for part in re.findall(r"[A-Za-zА-Яа-яЁё0-9]+", text.casefold())
-        if len(part) > 2
+        if len(part) > 2 and part not in _STOP
     }
     extra = {part[:3] for part in raw if len(part) >= 4}
+    extra -= _STOP
     return raw | extra
 
 

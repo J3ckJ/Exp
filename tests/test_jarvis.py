@@ -64,6 +64,7 @@ class JarvisTests(unittest.TestCase):
         self.assertIsNotNone(text)
         assert text is not None
         self.assertIn("мама", text.casefold())
+        self.assertNotIn("битрикс", text.casefold())
 
     def test_first_fact_keeps_long_useful_sentence(self) -> None:
         extract = (
