@@ -120,7 +120,8 @@ def run_until_morning() -> int:
         code = run_lesson(kind, *parts)
         if code != 0:
             print(f"night> lesson failed with {code}, continue")
-        if not still_night():
+        if fit_steps(200) < 200:
+            print("night> not enough time for another lesson")
             break
     print(f"Night ends. Moscow now {moscow_now()}.", flush=True)
     return 0
