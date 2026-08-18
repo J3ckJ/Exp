@@ -54,6 +54,28 @@ class ResearchTests(unittest.TestCase):
             follow = next_topics("Привет", "Мама читает книгу. Папа пьёт чай.")
         self.assertEqual(follow, [])
 
+    def test_git_uses_three_tree_not_blog(self) -> None:
+        page = (
+            "Git uses a three-tree architecture Git Workflow Once Again "
+            "Conclusion Designveloper / Blog / Key Programming Languages"
+        )
+        with patch("child.think.load_brain_lines", return_value=[]):
+            follow = next_topics("как устроен Git", page)
+        topics = " ".join(topic for topic, _why in follow).casefold()
+        self.assertTrue("tree" in topics or "architecture" in topics)
+        self.assertNotIn("blog", topics)
+        self.assertNotIn("programming languages", topics)
+
+    def test_git_is_not_github(self) -> None:
+        page = (
+            "GitHub is a proprietary developer platform. "
+            "It uses Git to provide distributed version control."
+        )
+        with patch("child.think.load_brain_lines", return_value=[]):
+            follow = next_topics("как устроен Git", page)
+        topics = [topic.casefold() for topic, _why in follow]
+        self.assertFalse(any("github" in topic for topic in topics))
+
     def test_docker_follows_namespaces_not_javascript(self) -> None:
         page = (
             "Docker is a platform that uses Linux namespaces and cgroups "

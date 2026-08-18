@@ -170,3 +170,15 @@ A computer program running on an ordinary operating system can see all resources
 ## Запомнил
 
 Such instances may look like real computers from the point of view of programs running in them.
+
+## Запомнил
+
+Git is a distributed version control software system that is capable of managing versions of source code or data.
+
+## Запомнил
+
+It is often used to control source code by programmers who are developing software collaboratively.
+
+## Запомнил
+
+It was originally created by Linus Torvalds for version control in the development of the Linux kernel.

@@ -128,6 +128,16 @@ GENERIC_CONCEPTS = {
     "them",
     "this",
     "that",
+    "blog",
+    "conclusion",
+    "workflow",
+    "home",
+    "menu",
+    "docs",
+    "directory",
+    "once again",
+    "programming languages",
+    "key programming languages",
 }
 
 LINK_VERBS = (
@@ -233,6 +243,12 @@ def _tokens(text: str) -> set[str]:
 
 def _sentences(text: str) -> list[str]:
     blob = clean_web_text(text)
+    blob = re.sub(r"\s+/\s+", ". ", blob)
+    blob = re.sub(
+        r"\b(Conclusion|Home|Menu|Documentation|Workflow)\b",
+        ".",
+        blob,
+    )
     parts = re.split(r"(?<=[.!?])\s+|\n+", blob)
     return [" ".join(part.split()).strip() for part in parts if part.strip()]
 
@@ -374,7 +390,7 @@ def relevant_facts(text: str, assignment: str, limit: int = 3) -> list[str]:
         words = _tokens(part)
         overlap = len(stems & words)
         explain = 1 if any(mark in _norm(part) for mark in EXPLAIN_MARKERS) else 0
-        if overlap == 0 and not any(stem in part.casefold() for stem in stems):
+        if overlap == 0 and not any(_has_stem(part, stem) for stem in stems):
             continue
         score = overlap * 2 + explain
         if parsed.intent == "structure":
@@ -388,6 +404,12 @@ def relevant_facts(text: str, assignment: str, limit: int = 3) -> list[str]:
         scored.append((score, part if len(part) <= 220 else part[:217].rsplit(" ", 1)[0] + "…"))
     scored.sort(key=lambda item: -item[0])
     return [part for _score, part in scored[:limit]]
+
+
+def _has_stem(text: str, stem: str) -> bool:
+    if not stem:
+        return False
+    return re.search(r"(?i)\b" + re.escape(stem) + r"\b", text) is not None
 
 
 def _has_link_verb(sentence: str) -> bool:
@@ -412,24 +434,38 @@ def _is_concept(phrase: str) -> bool:
     low = phrase.casefold()
     if low in GENERIC_CONCEPTS or low in STOPWORDS:
         return False
+    if any(low == item or item in low for item in ("blog", "conclusion", "programming languages")):
+        return False
     if all(word.casefold() in STOPWORDS for word in words):
+        return False
+    if len(words) >= 3 and sum(word[:1].isupper() for word in words) >= 3:
         return False
     letters = sum(ch.isalpha() for ch in phrase)
     return letters >= 3
 
 
-def _concepts_from(sentence: str) -> list[str]:
+def _concepts_from(sentence: str, topic_stems: set[str] | None = None) -> list[str]:
     found: list[str] = []
+    stems = topic_stems or set()
     for prefix in _LINK_AFTER:
         match = re.search(prefix + r"(.+?)(?:[.!?]|$)", sentence, flags=re.I)
         if not match:
             continue
-        chunk = _clean_concept(match.group(1))
-        parts = re.split(r"\s*(?:,|/|;|\band\b|\bи\b|\bas well as\b)\s*", chunk)
-        for part in parts:
-            part = _clean_concept(part)
-            if _is_concept(part):
-                found.append(part)
+        collected: list[str] = []
+        for word in _clean_concept(match.group(1)).split():
+            plain = word.strip(".,;:").casefold()
+            if plain in {"/", "|", "blog", "conclusion", "workflow", "home", "menu"}:
+                break
+            if any(_has_stem(word, stem) for stem in stems) and collected:
+                break
+            if plain in {"a", "an", "the"}:
+                continue
+            collected.append(word)
+            if len(collected) >= 4:
+                break
+        part = " ".join(collected)
+        if _is_concept(part):
+            found.append(part)
     return found
 
 
@@ -486,11 +522,11 @@ def next_topics(assignment: str, page: str, limit: int = 2) -> list[tuple[str, s
                 add(topic, why)
 
     for sentence in _sentences(page):
-        about = any(stem in sentence.casefold() for stem in stems)
+        about = any(_has_stem(sentence, stem) for stem in stems)
         if not about or not _has_link_verb(sentence):
             continue
         why = f"В устройстве «{parsed.topic}» это связано так: {sentence[:160]}"
-        for concept in _concepts_from(sentence):
+        for concept in _concepts_from(sentence, stems):
             craft = _canonicalize(concept)
             if craft.casefold() in GENERIC_CRAFTS and not _strong_craft_link(sentence):
                 continue
