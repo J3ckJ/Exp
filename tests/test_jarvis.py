@@ -5,6 +5,7 @@ from zoneinfo import ZoneInfo
 from child.agent import route_tools
 from child.curriculum import load_stage
 from child.memory import retrieve
+from child.morning import MORNING_PROMPTS
 from child.night import fit_steps, minutes_left, still_night
 from child.tools import first_fact, moscow_date, moscow_now, safe_calc
 from child.web import host_allowed
@@ -37,6 +38,7 @@ class JarvisTests(unittest.TestCase):
         self.assertIn("Столица России — Москва.", text)
         self.assertIn("Мама читает книгу.", text)
         self.assertIn("Hello.", text)
+        self.assertGreaterEqual(len(MORNING_PROMPTS), 8)
 
     def test_status_tool(self) -> None:
         text = route_tools("сколько шагов")

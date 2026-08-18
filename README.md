@@ -76,6 +76,7 @@ python3 -m child.chat --say "что такое Москва"
 python3 -m child.chat --say "что ты знаешь про Землю"
 python3 -m child.chat --say "запомни Хозяина зовут Евгений"
 python3 -m child.night
+python3 -m child.morning
 ```
 
 Один урок, если нужно: `python3 -m child.train --stage russian_core --steps 800 --resume checkpoints/child_latest.pt`.
