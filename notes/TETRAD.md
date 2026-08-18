@@ -145,3 +145,85 @@
 
 Это не взрослый ИИ. Это петля: маленькое тело + тетрадь .md + сам берёт тексты.
 
+## Ночь Джарвиса (пока человек спал)
+
+2026-08-18, Москва. Дедлайн 07:20. Тело то же: preschooler, 2.76 млн параметров. Это не ChatGPT и не Claude. Рот маленький. Руки отдельные.
+
+Что сделали руки:
+
+- время и дата в Москве
+- запомнить / ответить из тетради
+- посмотреть в Википедии (первая фраза, не меню сайта)
+- посчитать
+- сказать, сколько шагов уже выучил
+- сам ходить учиться до утра: `python3 -m child.night`
+
+Что сказал голос после ~30700 шагов:
+
+- «Привет» → «Привет. Как дела?»
+- «Кто ты?» → «Меня зовут Ребёнок.»
+- «Где мама?» → «Мама дома.»
+- «Hello» → «Hello. How are you?»
+- «What is print?» → «print writes text.»
+- «Write hello» → `print("hello")`
+- «Какая столица России?» → «Москва.»
+- «Что такое Земля?» → «Земля — планета.»
+- «Что ты умеешь?» → «Я говорю, помню, смотрю и считаю.»
+- «Как зовут хозяина?» → «Евгений.»
+- «Ты Джарвис?» → «Я Ребёнок. У меня есть руки.»
+
+Почему это Джарвис, а не большая модель: он сам берёт страницу, сам пишет в тетрадь, сам делает дело. Познания не стали сравнимы с ChatGPT — и не могли за ночь. 2.8 млн весов помнят привычку говорить. Знания лежат в `.md` и в руках. Так и задумано.
+
+Ошибки ночи, которые починили:
+
+1. После мира Python чуть поплыл — спели все песни (`recite_all`).
+2. Русская Википедия не открывалась из‑за ASCII в URL.
+3. Самоучка глотал старый HTML и меню сайта. Теперь только свежая страница, короткие фразы, без Navigation.
+
+Дальше до 07:20 — повтор, чтобы утром Привет не стёрся.
+
+
+## Самоучка: поучи мир в интернете
+
+2026-08-17 23:56 UTC. Источники: python-3-tutorial-introduction-html.txt, python-api-rest-v1-page-summary-Python-programm.txt, world-api-rest-v1-page-summary-Earth.txt, world-api-rest-v1-page-summary-Sun.txt, world-api-rest-v1-page-summary-Water.txt. Новых байт практики: 105672. Шагов: 800. Loss: 0.6415.
+
+В мозг-тетрадь дописал:
+- An Informal Introduction to Python — Python 3.14.7 documentation
+- An Informal Introduction to Python
+- Using Python as a Calculator
+- Numbers
+- Text
+- Lists
+- First Steps Towards Programming
+- Using the Python Interpreter
+- More Control Flow Tools
+- Show source
+- Navigation
+- index
+
+## Самоучка: поучи python в интернете
+
+2026-08-18 00:11 UTC. Источники: python-api-rest-v1-page-summary-Python-programm.txt, python-3-tutorial-introduction-html.txt. Новых байт практики: 76392. Шагов: 600. Loss: 0.3304.
+
+В мозг-тетрадь дописал:
+- Python supports multiple programming paradigms but with an emphasis on object-oriented programming and dynamic typing.
+- An Informal Introduction to Python — Python 3.14.7 documentation
+- An Informal Introduction to Python
+- Using Python as a Calculator
+- First Steps Towards Programming
+- Using the Python Interpreter
+- More Control Flow Tools
+- In the following examples, input and output are distinguished by the presence or
+- everything after the prompt, when the prompt appears; lines that do not begin
+- with a prompt are output from the interpreter.
+- Note that a secondary prompt on a
+- line by itself in an example means you must type a blank line; this is used to
+
+## Самоучка: поучи english в интернете
+
+2026-08-18 00:26 UTC. Источники: english-api-rest-v1-page-summary-English-languag.txt, english-api-rest-v1-page-summary-Hello.txt. Новых байт практики: 1116. Шагов: 600. Loss: 0.0583.
+
+В мозг-тетрадь дописал:
+- English is a language that started as the language of the Anglo-Saxons, in England.
+- Hello is a salutation or greeting in the English language.
+- It is first attested in writing from 1826.
