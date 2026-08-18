@@ -151,6 +151,11 @@ def is_weak_note(line: str, *, web: bool = False) -> bool:
         return True
     if web and line.count("{") >= 2 and ("wt" in low or "standard" in low):
         return True
+    if web and re.search(
+        r"latest accepted revision|reviewed on |mw-deduplicated|<link rel",
+        low,
+    ):
+        return True
     if web and line.endswith("?") and re.match(
         r"(?i)(what|how|where|who|why|когда|что |как )", line
     ):
@@ -175,6 +180,16 @@ def is_toc_junk(text: str) -> bool:
     numbered = len(re.findall(r"\b\d+\.\d+\b", head))
     chapters = len(re.findall(r"(?i)\b(chapters?|getting started|contents)\b", head))
     return numbered >= 6 and chapters >= 1
+
+
+def is_skin_junk(text: str) -> bool:
+    """Wikipedia /wiki/ skins that never reach the article body."""
+    low = text.casefold()
+    if "latest accepted revision" in low and len(text) < 2500:
+        return True
+    if "<link rel" in low or "mw-data:templatestyles" in low:
+        return True
+    return False
 
 
 def is_code_junk(text: str) -> bool:

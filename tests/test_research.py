@@ -179,7 +179,7 @@ class ResearchTests(unittest.TestCase):
         self.assertIn("docker", queries)
 
     def test_structure_reads_the_full_wiki_article(self) -> None:
-        from child.ingest import is_toc_junk
+        from child.ingest import is_toc_junk, is_weak_note
         from child.tools import wiki_url
 
         self.assertIn("/wiki/Git", wiki_url("Git", "en", full=True))
@@ -191,6 +191,9 @@ class ResearchTests(unittest.TestCase):
             "Recording Changes 3. Git Branching 3.1 Branches in a Nutshell"
         )
         self.assertTrue(is_toc_junk(toc))
+        self.assertTrue(
+            is_weak_note("This is the latest accepted revision , reviewed on 17 August 2026 .", web=True)
+        )
         page = (
             "Git - Wikipedia Jump to content From Wikipedia, the free encyclopedia. "
             "Written in Primarily in C, with GUI and programming scripts written in "
@@ -202,7 +205,6 @@ class ResearchTests(unittest.TestCase):
         topics = " ".join(topic for topic, _why in follow).casefold()
         self.assertNotIn("python", topics)
         self.assertNotIn("shell", topics)
-        from child.ingest import is_weak_note
         from child.think import relevant_facts
         from child.web import topic_from_query
 
