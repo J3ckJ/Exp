@@ -21,6 +21,7 @@ from child.think import (
     parse_assignment,
     relevant_facts,
     search_queries,
+    wiki_title_fits,
 )
 from child.tools import first_fact, wiki_url
 from child.web import (
@@ -201,6 +202,9 @@ def _read_topic(
         for url in urls_for_wish(topic, ()):
             tries.append((topic, url))
     wiki_title = wiki_search(parsed.topic) or wiki_search(query)
+    if wiki_title and not wiki_title_fits(wiki_title, assignment):
+        print(f"skip unrelated wiki {wiki_title}")
+        wiki_title = ""
     if wiki_title:
         title = wiki_title
         for lang in langs:
@@ -225,7 +229,7 @@ def _read_topic(
         if is_code_junk(text):
             print(f"skip code page {url}")
             continue
-        score = page_score(text, assignment, url)
+        score = page_score(text, assignment, url, query=query)
         if best is None or score > best[0]:
             best = (score, _page_label(label, url), text, url)
         parsed_assign = parse_assignment(assignment)

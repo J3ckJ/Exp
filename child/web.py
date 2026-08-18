@@ -49,6 +49,7 @@ DOCS_HINTS = {
     "php": ("site:www.php.net",),
     "python": ("site:docs.python.org",),
     "docker": ("site:docs.docker.com",),
+    "git": ("site:git-scm.com",),
 }
 
 TOPIC_PAGES: dict[str, tuple[str, ...]] = {
@@ -86,6 +87,10 @@ TOPIC_PAGES: dict[str, tuple[str, ...]] = {
         "https://en.wikipedia.org/api/rest_v1/page/summary/Docker_(software)",
         "https://ru.wikipedia.org/api/rest_v1/page/summary/Docker",
     ),
+    "git": (
+        "https://en.wikipedia.org/api/rest_v1/page/summary/Git",
+        "https://ru.wikipedia.org/api/rest_v1/page/summary/Git",
+    ),
     "general": (
         "https://simple.wikipedia.org/api/rest_v1/page/summary/Learning",
     ),
@@ -116,6 +121,7 @@ TOPIC_SEARCH = {
     "bitrix": "Битрикс24",
     "php": "PHP",
     "docker": "Docker",
+    "git": "Git",
     "python": "Python",
     "english": "English language",
     "russian": "Русский язык",
@@ -411,12 +417,17 @@ def wiki_search(query: str) -> str:
     titles = wiki_search_titles(query)
     if not titles:
         return ""
+    from child.think import wiki_title_fits
+
     ranked = sorted(
         enumerate(titles),
         key=lambda item: (_title_score(query, item[1]), -item[0]),
         reverse=True,
     )
-    return ranked[0][1]
+    for _index, title in ranked:
+        if wiki_title_fits(title, query):
+            return title
+    return ""
 
 
 def topic_from_query(query: str) -> str:
@@ -425,6 +436,8 @@ def topic_from_query(query: str) -> str:
         return "github"
     if any(word in low for word in ("php", "пхп")):
         return "php"
+    if re.search(r"(?<![a-zа-яё])git(?![a-zа-яё])", low):
+        return "git"
     if "docker" in low:
         return "docker"
     if any(word in low for word in ("битрикс", "bitrix", "црм", "crm")):

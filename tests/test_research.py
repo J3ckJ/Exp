@@ -104,11 +104,56 @@ class ResearchTests(unittest.TestCase):
         self.assertFalse(needs_deeper("как устроен Docker", docker))
         self.assertFalse(needs_deeper("что такое Git", blurb))
         self.assertEqual(deeper_query("как устроен Git").casefold(), "git internals")
+
+    def test_wiki_trap_skips_generic_architecture_article(self) -> None:
+        from child.think import hit_score, wiki_title_fits
+
+        self.assertFalse(wiki_title_fits("Architecture", "как устроен Git"))
+        self.assertFalse(wiki_title_fits("Wikipedia", "как устроен Git"))
+        self.assertFalse(wiki_title_fits("GitHub", "как устроен Git"))
+        self.assertTrue(wiki_title_fits("Git", "как устроен Git"))
+        self.assertTrue(wiki_title_fits("Битрикс24", "црм в битриксе"))
+        self.assertTrue(wiki_title_fits("PHP", "црм в битриксе"))
+        self.assertTrue(wiki_title_fits("OS-level virtualization", "как устроен Docker"))
+        git = hit_score(
+            "Git",
+            "https://en.wikipedia.org/api/rest_v1/page/summary/Git",
+            "как устроен Git",
+        )
+        buildings = hit_score(
+            "Architecture",
+            "https://en.wikipedia.org/api/rest_v1/page/summary/Architecture",
+            "как устроен Git",
+        )
+        self.assertGreater(git, buildings)
         from child.think import search_queries
 
         queries = " ".join(search_queries("как устроен Docker")).casefold()
         self.assertIn("architecture", queries)
         self.assertIn("docker", queries)
+
+    def test_git_facts_are_not_headings(self) -> None:
+        from child.ingest import is_weak_note
+        from child.think import relevant_facts
+        from child.web import topic_from_query
+
+        self.assertTrue(is_weak_note("What Are Git Concepts and Architecture?", web=True))
+        self.assertTrue(
+            is_weak_note(
+                "The Key Components of Git Git Object Types How Git Tracks Content "
+                "Staging Index Repositories Git Object Store",
+                web=True,
+            )
+        )
+        facts = relevant_facts(
+            "Git uses a three-tree architecture Git . It stores snapshots in an object database.",
+            "как устроен Git",
+        )
+        blob = " ".join(facts)
+        self.assertTrue("tree" in blob.casefold() or "snapshot" in blob.casefold())
+        self.assertNotIn("architecture Git", blob)
+        self.assertEqual(topic_from_query("как устроен Git"), "git")
+        self.assertEqual(topic_from_query("GitHub Actions"), "github")
 
     def test_weak_html_is_not_a_note(self) -> None:
         from child.ingest import clean_web_text, is_weak_note

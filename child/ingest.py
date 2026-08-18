@@ -136,6 +136,21 @@ def is_weak_note(line: str, *, web: bool = False) -> bool:
         return True
     if web and sum(ch.isalpha() for ch in line) < 12:
         return True
+    if web and line.endswith("?") and re.match(
+        r"(?i)(what|how|where|who|why|когда|что |как )", line
+    ):
+        return True
+    if web:
+        words = re.findall(r"[A-Za-zА-Яа-яЁё0-9\-]+", line)
+        titled = sum(1 for word in words if word[:1].isupper())
+        if (
+            len(words) >= 8
+            and titled >= 6
+            and " is " not in low
+            and " uses " not in low
+            and " это " not in low
+        ):
+            return True
     return False
 
 

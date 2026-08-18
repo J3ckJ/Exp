@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from urllib.parse import unquote
 
 from child.ingest import clean_web_text, is_code_junk, is_weak_note, is_web_junk
 from child.memory import load_brain_lines
@@ -138,6 +139,25 @@ GENERIC_CONCEPTS = {
     "once again",
     "programming languages",
     "key programming languages",
+    "architecture",
+    "wikipedia",
+    "internals",
+}
+
+# Encyclopedia articles named after a generic word, not the product.
+WIKI_TRAPS = {
+    "architecture",
+    "wikipedia",
+    "working",
+    "software",
+    "computer",
+    "internet",
+    "blog",
+    "language",
+    "internals",
+    "github",
+    "gcc",
+    "gnu compiler collection",
 }
 
 LINK_VERBS = (
@@ -307,6 +327,35 @@ def already_knows(topic: str) -> bool:
     return False
 
 
+def wiki_title_fits(title: str, assignment: str) -> bool:
+    """Skip encyclopedia articles named after a generic word, not the product."""
+    if not title:
+        return False
+    low = title.casefold().strip()
+    topic = parse_assignment(assignment).topic.casefold()
+    if low in WIKI_TRAPS:
+        return low == topic or any(part == low for part in topic.split())
+    return True
+
+
+def _tidy_fact(part: str, topic: str) -> str:
+    """Drop a trailing echo of the topic glued on by page headings."""
+    topic = " ".join(topic.split()).strip()
+    if topic:
+        part = re.sub(r"\s+" + re.escape(topic) + r"\s*[.]*$", "", part, flags=re.I)
+    part = " ".join(part.split()).strip(" .")
+    if part and part[-1] not in ".!?":
+        part += "."
+    return part
+
+
+def _wiki_slug(url: str) -> str:
+    match = re.search(r"(?:/wiki/|/page/summary/)([^/?#]+)", url)
+    if not match:
+        return ""
+    return unquote(match.group(1)).replace("_", " ").strip()
+
+
 def hit_score(title: str, url: str, assignment: str) -> int:
     """Prefer encyclopedia and docs; downrank beginner listicles."""
     parsed = parse_assignment(assignment)
@@ -318,6 +367,9 @@ def hit_score(title: str, url: str, assignment: str) -> int:
         host = match.group(1)
         path = match.group(2) or ""
     score = 0
+    slug = _wiki_slug(url) or title
+    if host.endswith("wikipedia.org") and not wiki_title_fits(slug, assignment):
+        return -40
     if host.endswith("wikipedia.org"):
         score += 10
         if parsed.intent == "structure":
@@ -348,17 +400,21 @@ def hit_score(title: str, url: str, assignment: str) -> int:
         score -= 5
     if "habr.com" in host and parsed.intent == "structure":
         score -= 3
+    if any(host.endswith(item) for item in ("git-scm.com", "php.net", "docs.docker.com")):
+        score += 6
     if "course" in blob:
         score -= 4
     return score
 
 
-def page_score(text: str, assignment: str, url: str = "") -> int:
+def page_score(text: str, assignment: str, url: str = "", query: str = "") -> int:
     parsed = parse_assignment(assignment)
     if is_code_junk(text):
         return -20
     score = hit_score("", url, assignment) if url else 0
     facts = relevant_facts(text, assignment, limit=3)
+    if not facts and query and query.casefold() != assignment.casefold():
+        facts = relevant_facts(text, query, limit=3)
     score += min(9, 3 * len(facts))
     low = _norm(text)
     if parsed.intent == "structure":
@@ -391,6 +447,9 @@ def relevant_facts(text: str, assignment: str, limit: int = 3) -> list[str]:
         overlap = len(stems & words)
         explain = 1 if any(mark in _norm(part) for mark in EXPLAIN_MARKERS) else 0
         if overlap == 0 and not any(_has_stem(part, stem) for stem in stems):
+            continue
+        part = _tidy_fact(part, parsed.topic)
+        if is_weak_note(part, web=True):
             continue
         score = overlap * 2 + explain
         if parsed.intent == "structure":
@@ -432,11 +491,13 @@ def _is_concept(phrase: str) -> bool:
     if not 1 <= len(words) <= 4:
         return False
     low = phrase.casefold()
-    if low in GENERIC_CONCEPTS or low in STOPWORDS:
+    if low in GENERIC_CONCEPTS or low in STOPWORDS or low in WIKI_TRAPS:
         return False
     if any(low == item or item in low for item in ("blog", "conclusion", "programming languages")):
         return False
     if all(word.casefold() in STOPWORDS for word in words):
+        return False
+    if low.startswith(("not ", "only ", "also ", "very ", "full ")):
         return False
     if len(words) >= 3 and sum(word[:1].isupper() for word in words) >= 3:
         return False
