@@ -108,3 +108,9 @@ Water is an inorganic compound with the formula H2O.
 Москва — столица России, город федерального значения.
 Земля — третья планета от Солнца.
 The Sun is the star at the centre of the Solar System.
+
+## Сам прочитал
+
+English is a language that started as the language of the Anglo-Saxons, in England.
+Hello is a salutation or greeting in the English language.
+It is first attested in writing from 1826.
