@@ -82,6 +82,23 @@ class ResearchTests(unittest.TestCase):
         self.assertIn("Стабильное окружение", cleaned)
         self.assertNotIn("<", cleaned)
 
+    def test_get_started_loses_to_wikipedia(self) -> None:
+        from child.ingest import is_code_junk
+        from child.think import hit_score
+
+        wiki = hit_score(
+            "Docker",
+            "https://en.wikipedia.org/wiki/Docker_(software)",
+            "как устроен Docker",
+        )
+        docs = hit_score(
+            "What is Docker?",
+            "https://docs.docker.com/get-started/docker-overview/",
+            "как устроен Docker",
+        )
+        self.assertGreater(wiki, docs)
+        self.assertTrue(is_code_junk("console.error('Gordon API error:' this.messages.splice"))
+
     def test_wiki_search_picks_bitrix_over_unrelated(self) -> None:
         with patch(
             "child.web.wiki_search_titles",

@@ -7,7 +7,7 @@ from pathlib import Path
 
 from urllib.parse import unquote, urlparse
 
-from child.ingest import is_weak_note, is_web_junk, split_practice_lines
+from child.ingest import is_code_junk, is_weak_note, is_web_junk, split_practice_lines
 from child.memory import remember
 from child.think import (
     already_knows,
@@ -217,6 +217,9 @@ def _read_topic(
             continue
         fetched += 1
         if not text or len(text) < 40 or _looks_like_json(text) or is_web_junk(text[:240]):
+            continue
+        if is_code_junk(text):
+            print(f"skip code page {url}")
             continue
         score = page_score(text, assignment, url)
         if best is None or score > best[0]:

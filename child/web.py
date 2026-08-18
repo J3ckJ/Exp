@@ -199,6 +199,7 @@ def strip_html(raw: str) -> str:
         " ",
         raw,
     )
+    raw = re.sub(r"(?is)<script[^>]*>.*", " ", raw)
     raw = re.sub(r"(?is)</?(p|div|li|h1|h2|h3|h4|tr|section|article|br)[^>]*>", "\n", raw)
     raw = re.sub(r"(?s)<[^>]+>", " ", raw)
     text = unescape(raw)

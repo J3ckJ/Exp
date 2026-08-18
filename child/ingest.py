@@ -100,6 +100,8 @@ _WEB_JUNK = (
     "we use cookies",
     "sign in",
     "log in",
+    "console.error",
+    "console.log",
 )
 
 
@@ -130,9 +132,26 @@ def is_weak_note(line: str, *, web: bool = False) -> bool:
         return True
     if re.search(r"/ хабр|geeksforgeeks| - youtube", low):
         return True
+    if "console." in low or low.startswith("//") or ("{" in line and "function" in low):
+        return True
     if web and sum(ch.isalpha() for ch in line) < 12:
         return True
     return False
+
+
+def is_code_junk(text: str) -> bool:
+    low = text.casefold()
+    markers = (
+        "console.",
+        "function(",
+        "=> {",
+        "this.messages",
+        "document.",
+        "$watch",
+        "this.$",
+        ".splice(",
+    )
+    return sum(1 for marker in markers if marker in low) >= 2 or "console.error" in low
 
 
 def split_practice_lines(text: str) -> list[str]:

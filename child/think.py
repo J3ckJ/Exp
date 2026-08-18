@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-from child.ingest import clean_web_text, is_weak_note, is_web_junk
+from child.ingest import clean_web_text, is_code_junk, is_weak_note, is_web_junk
 from child.memory import load_brain_lines
 
 # Weak prior for a few trades. Real next steps come from how the page links ideas.
@@ -271,20 +271,31 @@ def hit_score(title: str, url: str, assignment: str) -> int:
         path = match.group(2) or ""
     score = 0
     if host.endswith("wikipedia.org"):
-        score += 8
+        score += 10
+        if parsed.intent == "structure":
+            score += 4
     if host.startswith("docs.") or "/docs/" in path or "readthedocs" in host:
-        score += 6
+        score += 4
     for token in _tokens(parsed.topic):
         if len(token) > 3 and token in host:
-            score += 6
+            score += 3
     if parsed.intent == "structure":
         if any(mark in blob for mark in ("architecture", "internal", "устрой", "how-it-works")):
             score += 5
         if any(
             mark in blob
-            for mark in ("начинающ", "как пользоваться", "for beginners", "how-to-use", "tutorial")
+            for mark in (
+                "начинающ",
+                "как пользоваться",
+                "for beginners",
+                "how-to-use",
+                "tutorial",
+                "get-started",
+                "get_started",
+                "/overview",
+            )
         ):
-            score -= 6
+            score -= 8
     if any(mark in host for mark in ("geeksforgeeks.org", "w3schools.com")):
         score -= 5
     if "habr.com" in host and parsed.intent == "structure":
@@ -296,6 +307,8 @@ def hit_score(title: str, url: str, assignment: str) -> int:
 
 def page_score(text: str, assignment: str, url: str = "") -> int:
     parsed = parse_assignment(assignment)
+    if is_code_junk(text):
+        return -20
     score = hit_score("", url, assignment) if url else 0
     facts = relevant_facts(text, assignment, limit=3)
     score += min(9, 3 * len(facts))
