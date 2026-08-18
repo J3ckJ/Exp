@@ -220,6 +220,8 @@ MECHANISM_MARKS = (
     "namespace",
     "cgroup",
     "object database",
+    "local copy",
+    "entire repository",
 )
 
 HISTORY_MARKS = (

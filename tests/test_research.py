@@ -114,8 +114,13 @@ class ResearchTests(unittest.TestCase):
             "Docker is a set of products that uses operating system-level "
             "virtualization to deliver software in packages called containers."
         )
+        design = (
+            "Git maintains a local copy of the entire repository, also known "
+            "as the repo, with history and version-tracking abilities."
+        )
         self.assertTrue(needs_deeper("как устроен Git", blurb))
         self.assertFalse(needs_deeper("как устроен Docker", docker))
+        self.assertFalse(needs_deeper("как устроен Git", design))
         self.assertFalse(needs_deeper("что такое Git", blurb))
         self.assertEqual(deeper_query("как устроен Git").casefold(), "git internals")
 

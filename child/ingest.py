@@ -131,6 +131,7 @@ def is_weak_note(line: str, *, web: bool = False) -> bool:
     if low in {"courses", "navigation", "home", "index"}:
         return True
     if web and re.search(
+        r"материал из википедии|свободной энциклопедии|\[вд\]|"
         r"jump to content|from wikipedia|for other uses|not to be confused|"
         r"\{\{cite|/ хабр|geeksforgeeks| - youtube",
         low,
