@@ -332,15 +332,46 @@ def already_knows(topic: str) -> bool:
     return False
 
 
-def wiki_title_fits(title: str, assignment: str) -> bool:
+GENERIC_HUNT = {
+    "internal",
+    "internals",
+    "architecture",
+    "structure",
+    "overview",
+    "working",
+    "wikipedia",
+}
+
+
+def _product_tokens(text: str) -> set[str]:
+    words = {
+        part
+        for part in re.findall(r"[a-zа-яё0-9]+", text.casefold().replace("ё", "е"))
+        if len(part) > 2 and part not in STOPWORDS and part not in GENERIC_HUNT
+    }
+    extra = {part[:5] for part in words if len(part) >= 6}
+    return words | extra
+
+
+def wiki_title_fits(title: str, assignment: str, query: str = "") -> bool:
     """Skip encyclopedia articles named after a generic word, not the product."""
     if not title:
         return False
     low = title.casefold().strip()
-    topic = parse_assignment(assignment).topic.casefold()
+    parsed = parse_assignment(assignment)
+    topic = parsed.topic.casefold()
     if low in WIKI_TRAPS:
         return low == topic or any(part == low for part in topic.split())
-    return True
+    if " " not in title.strip():
+        return True
+    product = (
+        _product_tokens(parsed.topic)
+        | _product_tokens(parse_assignment(query or assignment).topic)
+        | _product_tokens(query)
+    )
+    if not product:
+        return True
+    return bool(product & _product_tokens(title))
 
 
 def _tidy_fact(part: str, topic: str) -> str:
@@ -362,7 +393,7 @@ def _wiki_slug(url: str) -> str:
     return unquote(match.group(1)).replace("_", " ").strip()
 
 
-def hit_score(title: str, url: str, assignment: str) -> int:
+def hit_score(title: str, url: str, assignment: str, query: str = "") -> int:
     """Prefer encyclopedia and docs; downrank beginner listicles."""
     parsed = parse_assignment(assignment)
     blob = f"{title} {url}".casefold()
@@ -374,7 +405,7 @@ def hit_score(title: str, url: str, assignment: str) -> int:
         path = match.group(2) or ""
     score = 0
     slug = _wiki_slug(url) or title
-    if host.endswith("wikipedia.org") and not wiki_title_fits(slug, assignment):
+    if host.endswith("wikipedia.org") and not wiki_title_fits(slug, assignment, query):
         return -40
     if host.endswith("wikipedia.org"):
         score += 10
@@ -422,7 +453,7 @@ def page_score(text: str, assignment: str, url: str = "", query: str = "") -> in
     parsed = parse_assignment(assignment)
     if is_code_junk(text):
         return -20
-    score = hit_score("", url, assignment) if url else 0
+    score = hit_score("", url, assignment, query) if url else 0
     facts = relevant_facts(text, assignment, limit=3)
     if not facts and query and query.casefold() != assignment.casefold():
         facts = relevant_facts(text, query, limit=3)

@@ -208,7 +208,7 @@ def _read_topic(
         for url in urls_for_wish(topic, ()):
             tries.append((topic, url))
     wiki_title = wiki_search(parsed.topic) or wiki_search(query)
-    if wiki_title and not wiki_title_fits(wiki_title, assignment):
+    if wiki_title and not wiki_title_fits(wiki_title, assignment, query):
         print(f"skip unrelated wiki {wiki_title}")
         wiki_title = ""
     full_wiki = parse_assignment(assignment).intent == "structure"
@@ -217,7 +217,7 @@ def _read_topic(
         for lang in langs:
             tries.append((wiki_title, wiki_url(wiki_title, lang, full=full_wiki)))
 
-    tries.sort(key=lambda item: hit_score(item[0], item[1], assignment), reverse=True)
+    tries.sort(key=lambda item: hit_score(item[0], item[1], assignment, query), reverse=True)
     seen_urls: set[str] = set(skip_urls or ())
     best: tuple[int, str, str, str] | None = None
     fetched = 0

@@ -92,6 +92,11 @@ TOPIC_PAGES: dict[str, tuple[str, ...]] = {
         "https://en.wikipedia.org/api/rest_v1/page/summary/Git",
         "https://ru.wikipedia.org/api/rest_v1/page/summary/Git",
     ),
+    "http": (
+        "https://en.wikipedia.org/wiki/HTTP",
+        "https://en.wikipedia.org/api/rest_v1/page/summary/HTTP",
+        "https://ru.wikipedia.org/api/rest_v1/page/summary/HTTP",
+    ),
     "general": (
         "https://simple.wikipedia.org/api/rest_v1/page/summary/Learning",
     ),
@@ -123,6 +128,7 @@ TOPIC_SEARCH = {
     "php": "PHP",
     "docker": "Docker",
     "git": "Git",
+    "http": "HTTP",
     "python": "Python",
     "english": "English language",
     "russian": "Русский язык",
@@ -445,6 +451,8 @@ def topic_from_query(query: str) -> str:
         return "github"
     if any(word in low for word in ("php", "пхп")):
         return "php"
+    if re.search(r"(?<![a-zа-яё])https?(?![a-zа-яё])", low):
+        return "http"
     if re.search(r"(?<![a-zа-яё])git(?![a-zа-яё])", low):
         return "git"
     if "docker" in low:

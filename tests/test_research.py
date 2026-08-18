@@ -133,7 +133,16 @@ class ResearchTests(unittest.TestCase):
         self.assertTrue(wiki_title_fits("Git", "как устроен Git"))
         self.assertTrue(wiki_title_fits("Битрикс24", "црм в битриксе"))
         self.assertTrue(wiki_title_fits("PHP", "црм в битриксе"))
-        self.assertTrue(wiki_title_fits("OS-level virtualization", "как устроен Docker"))
+        self.assertTrue(
+            wiki_title_fits(
+                "OS-level virtualization",
+                "как устроен Docker",
+                "Docker OS-level virtualization",
+            )
+        )
+        self.assertFalse(wiki_title_fits("Internal structure of Earth", "как устроен HTTP"))
+        self.assertFalse(wiki_title_fits("HNTB Architecture", "как устроен HTTP"))
+        self.assertTrue(wiki_title_fits("HTTP", "как устроен HTTP"))
         git = hit_score(
             "Git",
             "https://en.wikipedia.org/api/rest_v1/page/summary/Git",
@@ -144,7 +153,19 @@ class ResearchTests(unittest.TestCase):
             "https://en.wikipedia.org/api/rest_v1/page/summary/Architecture",
             "как устроен Git",
         )
+        earth = hit_score(
+            "Internal structure of Earth",
+            "https://en.wikipedia.org/wiki/Internal_structure_of_Earth",
+            "как устроен HTTP",
+            "HTTP internals",
+        )
+        http = hit_score(
+            "HTTP",
+            "https://en.wikipedia.org/wiki/HTTP",
+            "как устроен HTTP",
+        )
         self.assertGreater(git, buildings)
+        self.assertGreater(http, earth)
         blog = hit_score(
             "What Are Git Concepts and Architecture?",
             "https://www.designveloper.com/blog/git-concepts-architecture/",
