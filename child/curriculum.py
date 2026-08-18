@@ -408,6 +408,16 @@ def build_python_school() -> str:
     return python_body() + english_body() + _join(list(_GOLD) + list(_STORIES), 4)
 
 
+def build_russian_stories() -> str:
+    """Longer scenes so a 512-byte mouth can hold a whole little story."""
+    from child.stories import extra_talk_pairs, stories_body
+
+    turns = [format_pair(user, child) for user, child in extra_talk_pairs()]
+    gold = _join(list(_GOLD) + list(_STORIES) + list(_DIALOGUES), 6)
+    talk = "".join(turns) * 8
+    return gold + stories_body() + talk + build_russian_talk()
+
+
 def build_recite_all() -> str:
     """After a new language, sing the old songs so hello does not become print."""
     return (
@@ -436,6 +446,7 @@ CURRICULUM: dict[str, Callable[[], str]] = {
     "python_school": build_python_school,
     "recite_all": build_recite_all,
     "world_school": build_world_school,
+    "russian_stories": build_russian_stories,
 }
 
 

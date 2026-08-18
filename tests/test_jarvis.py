@@ -116,6 +116,11 @@ class JarvisTests(unittest.TestCase):
         self.assertGreater(kid.block_size, pre.block_size)
         self.assertGreater(kid.n_layer, pre.n_layer)
         self.assertGreater(Child(kid).count_parameters(), Child(pre).count_parameters())
+        from child.config import teen_config
+
+        self.assertGreater(
+            Child(teen_config()).count_parameters(), Child(kid).count_parameters()
+        )
         wish = parse_wish("поучи мир в интернете")
         self.assertEqual(wish.topic, "world")
         self.assertTrue(wish.use_web)

@@ -63,7 +63,7 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Grow after this lesson even if the mouth coped.",
     )
-    parser.add_argument("--grow-steps", type=int, default=2500)
+    parser.add_argument("--grow-steps", type=int, default=800)
     return parser.parse_args()
 
 
@@ -158,7 +158,7 @@ def run_night(
     skip_exam: bool,
     allow_grow: bool = False,
     force_grow: bool = False,
-    grow_steps: int = 2500,
+    grow_steps: int = 800,
 ) -> float:
     from child.research import is_research_command, run_mission
 

@@ -12,11 +12,13 @@ from child.ingest import join_lines, mix_study
 from child.lesson import DEFAULT_CHECKPOINT, load_child, save_checkpoint, teach_text
 from child.memory import load_brain_lines, remember
 from child.model import Child
+from child.transplant import transplant
 
-# A bigger body is a bigger random mouth. Songs live in the notebook.
+# Grow copies the old mouth into a bigger body, then sings so songs do not die.
 HARD_LOSS = 0.5
 MIN_NEW_BYTES = 1500
-DEFAULT_RECITE_STEPS = 2500
+DEFAULT_RECITE_STEPS = 800
+DEFAULT_BATCH = 16
 GROW_MARKERS = (
     "вырасти",
     "стань больше",
@@ -64,9 +66,12 @@ def backup_body(checkpoint: Path, age: str) -> Path:
 
 
 def growth_meal() -> str:
+    from child.stories import stories_body
+
     brain = join_lines(load_brain_lines(), repeats=4)
     songs = load_stage("recite_all")
-    return mix_study((brain, 4), (songs, 3))
+    stories = stories_body()
+    return mix_study((brain, 4), (songs, 3), (stories, 2))
 
 
 def grow_model(old: Child) -> tuple[Child, str, str]:
@@ -74,13 +79,13 @@ def grow_model(old: Child) -> tuple[Child, str, str]:
     nxt = next_age(current)
     if nxt is None:
         raise ValueError("no larger body is drawn yet")
-    young = Child(AGES[nxt])
+    young = transplant(old, AGES[nxt])
     print(
         f"The child grew himself. {current} {old.count_parameters():,} -> "
         f"{nxt} {young.count_parameters():,}  "
         f"block={young.config.block_size} layers={young.config.n_layer}"
     )
-    print("Weights are new and random. Memory is the notebook and the songs.")
+    print("Old weights were copied. New layers start as identity. Then we sing.")
     return young, current, nxt
 
 
@@ -91,12 +96,12 @@ def run_self_grow(
     new_bytes: int = 0,
     allow: bool = True,
     recite_steps: int = DEFAULT_RECITE_STEPS,
-    lr: float = 2e-4,
-    batch_size: int = 32,
+    lr: float = 1.2e-4,
+    batch_size: int = DEFAULT_BATCH,
     seed: int = 42,
 ) -> bool:
     path = Path(checkpoint)
-    device = torch.device("cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     torch.manual_seed(seed)
     model, _payload, _steps = load_child(path if path.exists() else None, device)
     current = age_name(model.config)
@@ -143,8 +148,8 @@ def run_self_grow(
         with tetrad.open("a", encoding="utf-8") as handle:
             handle.write(
                 f"\n## Сам вырос: {old_age} → {new_age}\n\n"
-                f"Ручек было меньше. Новое тело случайное. "
-                f"Спели тетрадь за {recite_steps} шагов, loss={loss:.4f}.\n"
+                f"Ручек стало больше. Старый рот скопировали, новые слои — тождество. "
+                f"Спели тетрадь и истории за {recite_steps} шагов, loss={loss:.4f}.\n"
             )
     print(f"New body saved. grow_loss={loss:.4f}  age={new_age}")
     return True
@@ -152,11 +157,12 @@ def run_self_grow(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="The child grows a bigger random mouth, then sings the notebook."
+        description="The child grows a bigger mouth, copying the old one, then sings."
     )
     parser.add_argument("--checkpoint", default=str(DEFAULT_CHECKPOINT))
     parser.add_argument("--recite-steps", type=int, default=DEFAULT_RECITE_STEPS)
-    parser.add_argument("--lr", type=float, default=2e-4)
+    parser.add_argument("--batch-size", type=int, default=DEFAULT_BATCH)
+    parser.add_argument("--lr", type=float, default=1.2e-4)
     return parser.parse_args()
 
 
@@ -168,6 +174,7 @@ def main() -> None:
         allow=True,
         recite_steps=args.recite_steps,
         lr=args.lr,
+        batch_size=args.batch_size,
     )
     raise SystemExit(0 if grew else 1)
 

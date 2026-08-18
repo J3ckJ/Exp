@@ -55,7 +55,19 @@ class ChildTests(unittest.TestCase):
         self.assertIn("Что делает мама?", school)
         self.assertIn("Мама дома. Мама читает книгу.", school)
 
+    def test_stories_stage_is_long_enough(self) -> None:
+        from child.curriculum import load_stage
+        from child.config import teen_config
+        from child.bytes_io import text_to_bytes
+
+        text = load_stage("russian_stories")
+        self.assertIn("Мама читает книгу", text)
+        self.assertIn("TLS", text)
+        self.assertGreater(text_to_bytes(text).numel(), teen_config().block_size * 4)
+
     def test_unknown_stage_is_rejected(self) -> None:
+        from child.curriculum import load_stage
+
         with self.assertRaises(KeyError):
             load_stage("martian_lullaby")
 

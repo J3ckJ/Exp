@@ -14,7 +14,7 @@ from child.lesson import (
     save_checkpoint,
     teach,
 )
-from child.model import Child
+from child.transplant import transplant
 
 # A school day: drill, then a full Russian day, then quiet recitation.
 # English and Python stay in the corridor. Not today.
@@ -38,7 +38,7 @@ def parse_args() -> argparse.Namespace:
         "--age",
         default=None,
         choices=sorted(AGES),
-        help="Grow a new body if the checkpoint is smaller. toddler or preschooler.",
+        help="Grow into this body if the checkpoint is smaller. Old weights are copied.",
     )
     parser.add_argument(
         "--resume",
@@ -61,7 +61,7 @@ def main() -> None:
         sys.stdout.reconfigure(line_buffering=True)
     args = parse_args()
     torch.manual_seed(args.seed)
-    device = torch.device("cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     resume = Path(args.resume) if args.resume else None
     if resume is not None and not resume.exists():
         yasli = Path("checkpoints/child_russian_yasli.pt")
@@ -76,10 +76,8 @@ def main() -> None:
                 f"age={args.age}  block={target.block_size}  "
                 f"layers={target.n_layer}  width={target.n_embd}"
             )
-            print("Weights start fresh. Memory lives in lessons and notes/BRAIN.md.")
-            if args.age == "schoolkid":
-                print("schoolkid is the next body. The preschooler songs must be taught again.")
-            model = Child(target).to(device)
+            print("Old weights copied. New depth starts as identity.")
+            model = transplant(model, target).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
     n_params = model.count_parameters()
     if resume is not None and resume.exists():

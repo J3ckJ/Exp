@@ -142,6 +142,9 @@ def teach_text(
 ) -> float:
     data = text_to_bytes(text)
     block_size = model.config.block_size
+    if block_size >= 512 and batch_size > 16:
+        print(f"batch {batch_size} is wide for mouth {block_size}; using 16")
+        batch_size = 16
     if data.size(0) < block_size + 2:
         raise SystemExit(f"Study text {label!r} is too short for this block_size.")
     last_loss = float("nan")

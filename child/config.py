@@ -32,7 +32,7 @@ def preschooler_config() -> ChildConfig:
 
 
 def schoolkid_config() -> ChildConfig:
-    """Next body on the self-grow ladder. A bigger random mouth, not downloaded knowledge."""
+    """Next body on the self-grow ladder. Knowledge is copied, not reborn."""
     return ChildConfig(
         vocab_size=256,
         block_size=256,
@@ -44,13 +44,27 @@ def schoolkid_config() -> ChildConfig:
     )
 
 
+def teen_config() -> ChildConfig:
+    """Longer mouth, two extra layers. Same width so old songs still fit."""
+    return ChildConfig(
+        vocab_size=256,
+        block_size=512,
+        n_layer=10,
+        n_head=8,
+        n_embd=256,
+        dropout=0.1,
+        bias=True,
+    )
+
+
 AGES: dict[str, ChildConfig] = {
     "toddler": toddler_config(),
     "preschooler": preschooler_config(),
     "schoolkid": schoolkid_config(),
+    "teen": teen_config(),
 }
 
-LADDER: tuple[str, ...] = ("toddler", "preschooler", "schoolkid")
+LADDER: tuple[str, ...] = ("toddler", "preschooler", "schoolkid", "teen")
 
 
 def configs_match(left: ChildConfig, right: ChildConfig) -> bool:
