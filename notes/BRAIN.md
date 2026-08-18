@@ -330,3 +330,19 @@ TLS и SSL используют асимметричное шифрование 
 ## Запомнил
 
 TLS provides endpoint authentication and communications confidentiality over the Internet using cryptography.
+
+## Запомнил
+
+When secured by TLS, connections between a client (e.g., a web browser) and a server (e.g., wikipedia.org) will have all of the following properties: The connection is private (or has confidentiality) because a…
+
+## Запомнил
+
+In computing, a handshake is a process in which two devices establish a communication link by authenticating and validating each other's signals.
+
+## Запомнил
+
+The handshaking process usually takes place in order to establish rules for communication when a computer attempts to communicate with another device.
+
+## Запомнил
+
+RFC 2818: “HTTP Over TLS”, distinguishes secured traffic from insecure traffic by the use of a different 'server port'.

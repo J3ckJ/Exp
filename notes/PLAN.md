@@ -1,30 +1,31 @@
 # План ребёнка
 
-Обновлён 2026-08-18 09:46 UTC.
+Обновлён 2026-08-18 10:32 UTC.
 
 ## Задание
 
-как устроен DNS
+как устроен TLS
 
 ## Что сделал сам
 
-- прочитал «dns»
-- сам пошёл: 255 octets of storage, query
-- прочитал «dns»
-- прочитал «DNS zone»
+- прочитал «Transport Layer Security»
+- сам пошёл: handshaking procedure
+- прочитал «Handshake (computing)»
+- прочитал «Transport Layer Security»
+- сам пошёл: асимметричное шифрование, public key infrastructure
 
 ## Понял
 
-- The Domain Name System (DNS) is a hierarchical and distributed name service that provides a naming system for computers, services, and other resources on the Internet or other Internet Protocol (IP) networks.
-- DNS can also be partitioned according to class where the separate classes can be thought of as an array of parallel namespace trees.
-- A secondary server uses a special automatic updating mechanism in the DNS protocol in communication with its primary to maintain an identical copy of the primary records.
-- It defines the DNS protocol, a detailed specification of the data structures and data communication exchanges used in the DNS, as part of the Internet protocol suite.
-- It associates various information with domain names assigned to each of the associated entities.
-- The Domain Name System has been an essential component of the functionality of the Internet since 1985.
-- A DNS zone is a specific portion of the DNS namespace in the Domain Name System (DNS), which a specific organization or administrator manages.
-- A DNS zone is an administrative space allowing more granular control of the DNS components, such as authoritative nameserver.
+- Transport Layer Security (TLS) is a cryptographic protocol designed to provide communications security over a computer network, such as the Internet.
+- It runs in the presentation layer and is itself composed of two layers: the TLS record and the TLS handshake protocols.
+- During this handshake, the client and server agree on various parameters used to establish the connection's security: The handshake begins when a client connects to a TLS-enabled server requesting a secure connection…
+- To generate the session keys used for the secure connection, the client either: encrypts a random number (PreMasterSecret) with the server's public key and sends the result to the server (which only the server should…
+- If any one of the above steps fails, then the TLS handshake fails and the connection is not created.
+- TLS и SSL используют асимметричное шифрование для аутентификации, симметричное шифрование для конфиденциальности и коды аутентичности сообщений для сохранения целостности сообщений.
+- In computing, a handshake is a process in which two devices establish a communication link by authenticating and validating each other's signals.
+- Фаза переговоров: Клиент посылает сообщение ClientHello, указывая последнюю версию поддерживаемого TLS-протокола, случайное число и список поддерживаемых шифронаборов.
 
 ## Сам решил учить дальше
 
-- 255 octets of storage: В устройстве «DNS» это связано так: In the internal binary representation of the DNS this maximum length of 253 requires 255 octets of storage, as it also stores the length of the first of many la
-- query: В устройстве «DNS» это связано так: ==== Authoritative name server ==== An authoritative name server is a name server that only gives answers to DNS queries from data that have been configured by 
+- public key infrastructure: В устройстве «TLS» это связано так: Mutual authentication requires public key infrastructure (PKI) deployment to clients.
+- асимметричное шифрование: В устройстве «TLS» это связано так: TLS и SSL используют асимметричное шифрование для аутентификации, симметричное шифрование для конфиденциальности.

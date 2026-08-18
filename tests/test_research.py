@@ -313,6 +313,17 @@ class ResearchTests(unittest.TestCase):
         blob = " ".join(topics)
         self.assertNotIn("imap", blob)
         self.assertFalse(any("must" in topic for topic in topics))
+        page = (
+            "Newer versions of SSL/TLS are based on SSL 3.0. "
+            "TLS-протокол основан на спецификации протокола SSL версии 3.0. "
+            "RFC 3943: Transport Layer Security Protocol Compression Using Lempel-Ziv-Stac."
+        )
+        with patch("child.think.load_brain_lines", return_value=[]):
+            follow = next_topics("как устроен TLS", page)
+        topics = " ".join(topic for topic, _why in follow).casefold()
+        self.assertNotIn("ssl 3", topics)
+        self.assertNotIn("спецификац", topics)
+        self.assertNotIn("lempel", topics)
         from child.think import wiki_page_key, wiki_title_fits as fits
 
         self.assertFalse(fits("Transport Layer Security", "TLS handshaking procedure"))

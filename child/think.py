@@ -701,6 +701,10 @@ def _is_concept(phrase: str) -> bool:
     if words[0][:1].isdigit():
         return False
     lowered = {word.casefold() for word in words}
+    if re.match(r"ssl\s*\d+", low) or low.startswith("спецификац"):
+        return False
+    if any(token in low for token in ("lempel", "freedesktop", "сквозн", "xmpp")):
+        return False
     if "mail" in lowered and "news" in lowered:
         return False
     if any(
