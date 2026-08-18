@@ -77,7 +77,7 @@ def next_topics(assignment: str, page: str, limit: int = 2) -> list[tuple[str, s
 
     def add(topic: str, why: str) -> None:
         key = topic.casefold()
-        if key in seen or already_knows(topic):
+        if key in seen:
             return
         if key == assignment.casefold():
             return

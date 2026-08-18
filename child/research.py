@@ -9,7 +9,7 @@ from urllib.parse import unquote, urlparse
 
 from child.ingest import split_practice_lines
 from child.memory import remember
-from child.think import next_topics
+from child.think import already_knows, next_topics
 from child.tools import first_fact, wiki_url
 from child.web import fetch_url, host_allowed, topic_from_query, urls_for_wish, urls_in_text, wiki_search
 
@@ -214,12 +214,18 @@ def run_mission(wish: str) -> str:
             report.append(f"Прочитал: {title}. {notes[0]}")
         else:
             report.append(f"Прочитал: {title}.")
-        if why_next:
-            for topic, why in why_next:
-                report.append(f"Сам решил: дальше «{topic}». {why}")
-                if topic.casefold() not in seen:
-                    queue.append(topic)
-            log.append("сам пошёл: " + ", ".join(topic for topic, _why in why_next))
+        going: list[str] = []
+        for topic, why in why_next:
+            if already_knows(topic):
+                report.append(f"«{topic}» уже в тетради — второй раз не иду.")
+                log.append(f"уже в тетради: {topic}")
+                continue
+            report.append(f"Сам решил: дальше «{topic}». {why}")
+            if topic.casefold() not in seen:
+                queue.append(topic)
+                going.append(topic)
+        if going:
+            log.append("сам пошёл: " + ", ".join(going))
 
     _note_plan(assignment, log, all_follow)
     report.append("Коротко записал в тетрадь и в notes/PLAN.md.")

@@ -108,6 +108,33 @@ class ResearchTests(unittest.TestCase):
         self.assertIn("PHP", body)
         self.assertIn("Битрикс", body)
 
+    def test_known_php_stays_in_the_plan_but_is_not_fetched(self) -> None:
+        def fake_search(query: str) -> str:
+            if "php" in query.casefold():
+                raise AssertionError("should not hunt PHP again")
+            return "Битрикс24"
+
+        def fake_fetch(url: str) -> str:
+            if "PHP" in url:
+                raise AssertionError("should not fetch PHP again")
+            return "Битрикс24 — российская CRM. В смарт-процессах есть блоки PHP."
+
+        with TemporaryDirectory() as tmp:
+            plan = Path(tmp) / "PLAN.md"
+            with (
+                patch("child.research.wiki_search", side_effect=fake_search),
+                patch("child.research.fetch_url", side_effect=fake_fetch),
+                patch("child.research.remember", return_value="ok"),
+                patch("child.think.load_brain_lines", return_value=["PHP — язык."]),
+                patch("child.research.PLAN_PATH", plan),
+                patch("child.research.urls_for_wish", return_value=[]),
+            ):
+                report = run_mission("изучи как делается ЦРМ в битриксе")
+            body = plan.read_text(encoding="utf-8")
+        self.assertIn("Битрикс24", report)
+        self.assertIn("уже в тетради", report)
+        self.assertIn("PHP", body)
+
 
 if __name__ == "__main__":
     unittest.main()
